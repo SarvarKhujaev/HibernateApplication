@@ -1,89 +1,134 @@
 package com.hibernate.hibernateapplication.entities;
 
-import com.beeline.beelineapplication.constants.OrderStatus;
-import com.beeline.beelineapplication.inspectors.LogInspector;
+import com.hibernate.hibernateapplication.inspectors.TimeInspector;
+import com.hibernate.hibernateapplication.constans.ErrorMessages;
+import com.hibernate.hibernateapplication.constans.OrderStatus;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import jakarta.validation.constraints.*;
+import jakarta.persistence.*;
+
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
-public final class Order extends LogInspector {
-    public UUID getUserId() {
-        return this.userId;
+@Entity( name = "orders" )
+@Table( name = "orders", schema = "entities" )
+public class Order extends TimeInspector {
+    public Long getId() {
+        return this.id;
     }
 
     public List< Product > getProductList() {
         return this.productList;
     }
 
-    public void setId ( final UUID id ) {
-        this.id = id;
+    public User getUser() {
+        return this.user;
     }
 
-    public void setUserId ( final UUID userId ) {
-        this.userId = userId;
+    public Date getCreatedDate() {
+        return this.createdDate;
     }
 
-    public void setCreatedDate ( final Date createdDate ) {
-        this.createdDate = createdDate;
+    public long getTotalOrderSum() {
+        return this.totalOrderSum;
     }
 
-    public void setOrderStatus( final OrderStatus orderStatus ) {
-        this.orderStatus = orderStatus;
+    public void setUser( final User user ) {
+        this.user = user;
+    }
+
+    public void initializeProductList () {
+        this.setTotalCountOfProductsInOrder( this.getProductList().size() );
+
+        this.getProductList()
+                .stream()
+                .map( Product::getPrice )
+                .forEach( value -> this.setTotalOrderSum( this.getTotalOrderSum() + value ) );
+
+        super.analyze(
+                this.getProductList(),
+                product -> {
+                    product.setTotalCount( product.getTotalCount() - 1 );
+                    product.setProductWasSoldCount( product.getProductWasSoldCount() + 1 );
+                }
+        );
     }
 
     public void setProductList ( final List< Product > productList ) {
-        this.productList = productList;
+        this.productList = productList.stream().filter( product -> product.getTotalCount() > 0 ).toList();
     }
 
-    public void setTotalOrderSum( final int totalOrderSum ) {
+    public void setTotalOrderSum ( final long totalOrderSum ) {
         this.totalOrderSum = totalOrderSum;
     }
 
-    public void setTotalCountOfProductsInOrder( final int totalCountOfProductsInOrder ) {
+    public int getTotalCountOfProductsInOrder() {
+        return this.totalCountOfProductsInOrder;
+    }
+
+    public void setTotalCountOfProductsInOrder ( final int totalCountOfProductsInOrder ) {
         this.totalCountOfProductsInOrder = totalCountOfProductsInOrder;
     }
 
+    public OrderStatus getOrderStatus() {
+        return this.orderStatus;
+    }
+
+    public void setOrderStatus ( final OrderStatus orderStatus ) {
+        this.orderStatus = orderStatus;
+    }
+
+    public void setId ( final Long id ) {
+        this.id = id;
+    }
+
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
+    }
+
     // общая стоимость заказа
-    private int totalOrderSum;
+    @NotNull( message = ErrorMessages.NULL_VALUE )
+    @Positive( message = ErrorMessages.VALUE_MUST_BE_POSITIVE)
+    @Column( nullable = false, columnDefinition = "BIGINT", name = "total_order_sum" )
+    private long totalOrderSum = 0;
 
     // общее количество товаров в заказе
-    private int totalCountOfProductsInOrder;
+    @NotNull( message = ErrorMessages.NULL_VALUE )
+    @Positive( message = ErrorMessages.VALUE_MUST_BE_POSITIVE )
+    @Column( nullable = false, columnDefinition = "SMALLINT", name = "total_count_of_products_in_order" )
+    private int totalCountOfProductsInOrder = 0;
 
-    private UUID id;
-
-    // id пользователя который сделал заказ
-    private UUID userId;
-
-    // дата создания заказа
-    private Date createdDate;
-
+    // https://www.baeldung.com/jpa-default-column-values
+    @NotNull( message = ErrorMessages.NULL_VALUE )
+    @NotBlank( message = ErrorMessages.NULL_VALUE )
+    @Enumerated( value = EnumType.STRING )
+    @Column( name = "order_status", nullable = false )
     private OrderStatus orderStatus = OrderStatus.CREATED;
 
-    private List< Product > productList;
+    @Id
+    @GeneratedValue( strategy = GenerationType.IDENTITY )
+    private Long id;
 
-    public static Order generate (
-            final ResultSet resultSet
-    ) {
-        return new Order( resultSet );
-    }
+    @NotNull( message = ErrorMessages.NULL_VALUE )
+    @Column( nullable = false, columnDefinition = "TIMESTAMP DEFAULT now()", name = "created_date" )
+    private Date createdDate = super.newDate(); // дата создания аккаунта
 
-    private Order ( final ResultSet resultSet ) {
-        try {
-            this.setId( resultSet.getObject( "id", UUID.class ) );
-            this.setUserId( resultSet.getObject( "user_id", UUID.class ) );
+    @NotNull( message = ErrorMessages.NULL_VALUE )
+    @ManyToOne( fetch = FetchType.LAZY )
+    private User user;
 
-            this.setCreatedDate( resultSet.getDate( "created_date" ) );
+    @NotNull( message = ErrorMessages.NULL_VALUE )
+    @OneToMany(
+            orphanRemoval = true,
+            targetEntity = Product.class,
+            cascade = CascadeType.REFRESH,
+            fetch = FetchType.LAZY
+    )
+    @JoinColumn(
+            name = "order_id"
+    )
+    @OrderBy( value = "productName DESC, price DESC" )
+    private List< Product > productList = super.newList();
 
-            this.setTotalOrderSum( resultSet.getInt( "total_order_sum" ) );
-            this.setTotalCountOfProductsInOrder( resultSet.getInt( "total_count_of_products_in_order" ) );
-
-            this.setProductList( resultSet.getObject( "product_list", List.class ) );
-            this.setOrderStatus( resultSet.getObject( "orderStatus", OrderStatus.class ) );
-        } catch ( final SQLException exception ) {
-            super.logging( exception );
-        }
-    }
+    public Order () {}
 }

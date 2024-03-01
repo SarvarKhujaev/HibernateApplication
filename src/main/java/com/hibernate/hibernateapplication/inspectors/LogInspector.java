@@ -12,6 +12,14 @@ public class LogInspector extends TimeInspector {
         return this.LOGGER;
     }
 
+    protected void logging ( final Class clazz ) {
+        this.getLOGGER().info( clazz.getName() + " was created" );
+    }
+
+    protected void logging ( final Object o ) {
+        this.getLOGGER().info( o.getClass().getName() + " was closed successfully" );
+    }
+
     protected void logging ( final String message ) {
         this.getLOGGER().info( message );
     }

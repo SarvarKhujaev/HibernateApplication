@@ -1,15 +1,19 @@
 package com.hibernate.hibernateapplication.entities;
 
-import com.beeline.beelineapplication.constants.Categories;
-import com.beeline.beelineapplication.inspectors.LogInspector;
+import com.hibernate.hibernateapplication.inspectors.TimeInspector;
+import com.hibernate.hibernateapplication.constans.ErrorMessages;
+import com.hibernate.hibernateapplication.constans.Categories;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import jakarta.validation.constraints.*;
+import jakarta.persistence.*;
+
 import java.util.Date;
-import java.util.UUID;
 
-public final class Product extends LogInspector {
-    public UUID getId() {
+@Entity( name = "products" )
+@Table( name = "products", schema = "entities" )
+@Cacheable
+public class Product extends TimeInspector {
+    public long getId() {
         return this.id;
     }
 
@@ -17,91 +21,105 @@ public final class Product extends LogInspector {
         return this.price;
     }
 
-    public String getDescription() {
-        return this.description;
-    }
-
-    public String getProductName() {
-        return this.productName;
-    }
-
-    public Categories getCategory() {
-        return this.category;
-    }
-
-    public void setId ( final UUID id ) {
-        this.id = id;
-    }
-
     public void setPrice ( final long price ) {
         this.price = price;
     }
 
-    public void setTotalCount ( final int totalCount ) {
+    public long getTotalCount() {
+        return this.totalCount;
+    }
+
+    public void setTotalCount ( final long totalCount ) {
         this.totalCount = totalCount;
     }
 
-    public void setCreatedDate ( final Date createdDate ) {
-        this.createdDate = createdDate;
+    public long getProductWasSoldCount() {
+        return this.productWasSoldCount;
     }
 
-    public void setCategory ( final Categories category ) {
-        this.category = category;
+    public void setProductWasSoldCount ( final long productWasSoldCount ) {
+        this.productWasSoldCount = productWasSoldCount;
+    }
+
+    public String getDescription() {
+        return this.description;
     }
 
     public void setDescription ( final String description ) {
         this.description = description;
     }
 
+    public String getProductName() {
+        return this.productName;
+    }
+
     public void setProductName ( final String productName ) {
         this.productName = productName;
     }
 
-    public void setProductWasSoldCount ( final int productWasSoldCount ) {
-        this.productWasSoldCount = productWasSoldCount;
+    public void setId ( final Long id ) {
+        this.id = id;
     }
 
+    public Date getCreatedDate() {
+        return this.createdDate;
+    }
+
+    public void setCreatedDate ( final Date createdDate ) {
+        this.createdDate = createdDate;
+    }
+
+    public Categories getCategory() {
+        return this.category;
+    }
+
+    public void setCategory ( final Categories category ) {
+        this.category = category;
+    }
+
+    @NotNull( message = ErrorMessages.NULL_VALUE )
+    @Positive( message = ErrorMessages.VALUE_MUST_BE_POSITIVE )
+    @Column( nullable = false )
     private long price;
 
     // количество оставшихся товаров в хранилице
-    private int totalCount;
+    @NotNull( message = ErrorMessages.NULL_VALUE )
+    @Min( value = 0, message = ErrorMessages.VALUE_MUST_BE_POSITIVE )
+    @Column( nullable = false, name = "total_count", columnDefinition = "BIGINT DEFAULT 0" )
+    private long totalCount = 0;
 
     // количество проданных товаров
-    private int productWasSoldCount;
+    @NotNull( message = ErrorMessages.NULL_VALUE )
+    @Min( value = 0, message = ErrorMessages.VALUE_MUST_BE_POSITIVE )
+    @Column( nullable = false, name = "product_was_sold_count", columnDefinition = "BIGINT DEFAULT 0" )
+    private long productWasSoldCount = 0;
 
+    @Size( min = 3, max = 50, message = ErrorMessages.VALUE_OUT_OF_RANGE )
+    @NotNull( message = ErrorMessages.NULL_VALUE )
+    @NotBlank( message = ErrorMessages.NULL_VALUE )
+    @Column( nullable = false, length = 50 )
     private String description; // описание товара
+
+    @Size( min = 3, max = 50, message = ErrorMessages.VALUE_OUT_OF_RANGE )
+    @NotNull( message = ErrorMessages.NULL_VALUE )
+    @NotBlank( message = ErrorMessages.NULL_VALUE )
+    @Column( nullable = false, length = 20, name = "product_name" )
     private String productName; // название товара
 
-    private UUID id;
+    @Id
+    @GeneratedValue( strategy = GenerationType.IDENTITY )
+    private Long id;
 
     // дата создания товара
-    private Date createdDate;
+    @NotNull( message = ErrorMessages.NULL_VALUE )
+    @Column( nullable = false, columnDefinition = "TIMESTAMP DEFAULT now()", name = "created_date" )
+    private Date createdDate = super.newDate();
 
+    // https://www.baeldung.com/jpa-default-column-values
+    @NotNull( message = ErrorMessages.NULL_VALUE )
+    @Column( nullable = false )
+    @Enumerated( value = EnumType.STRING )
     private Categories category = Categories.FOR_MEN;
 
-    public static Product generate (
-            final ResultSet resultSet
-    ) {
-        return new Product( resultSet );
-    }
-
-    private Product (
-            final ResultSet resultSet
-    ) {
-        try {
-            this.setId( resultSet.getObject( "id", UUID.class ) );
-
-            this.setPrice( resultSet.getLong( "price" ) );
-            this.setTotalCount( resultSet.getInt( "totalCount" ) );
-            this.setProductWasSoldCount( resultSet.getInt( "productWasSoldCount" ) );
-
-            this.setProductName( resultSet.getString( "productName" ) );
-            this.setDescription( resultSet.getString( "description" ) );
-
-            this.setCreatedDate( resultSet.getDate( "created_date" ) );
-            this.setCategory( resultSet.getObject( "category", Categories.class ) );
-        } catch ( final SQLException exception ) {
-            super.logging( exception );
-        }
-    }
+    public Product() {}
 }
