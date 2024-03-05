@@ -82,7 +82,7 @@ public class User extends TimeInspector {
             cascade = CascadeType.ALL,
             fetch = FetchType.LAZY
     )
-    @OrderBy( value = "totalOrderSum DESC, totalOrderSum DESC" )
+    @OrderBy( value = "totalOrderSum DESC, totalCountOfProductsInOrder DESC" )
     @JoinColumn( name = "user_id" )
     private List< Order > orders = super.newList();
 
