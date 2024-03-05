@@ -74,7 +74,7 @@ public final class HibernateConnector extends Archieve {
         this.session = this.getSessionFactory().openSession();
 
         /*
-        создаем instance для валидации объектов
+        создаем instance класса Validation для валидации объектов
          */
         this.validatorFactory = Validation.buildDefaultValidatorFactory();
 
@@ -179,7 +179,7 @@ public final class HibernateConnector extends Archieve {
 
         transaction.commit();
 
-        System.out.println( transaction.getStatus() );
+        super.logging( transaction.getStatus() );
     }
 
     public void test () {
@@ -201,6 +201,9 @@ public final class HibernateConnector extends Archieve {
         scrollableResults.close();
     }
 
+    /*
+    закрывам все соединения и instance
+     */
     public synchronized void close () {
         this.getSession().clear();
         this.getSession().close();
