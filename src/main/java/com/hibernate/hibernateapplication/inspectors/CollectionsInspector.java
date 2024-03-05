@@ -11,7 +11,7 @@ public class CollectionsInspector extends DataValidateInspector {
         return Collections.emptyList();
     }
 
-    public <T> ArrayList<T> newList () {
+    protected  <T> ArrayList<T> newList () {
         return new ArrayList<>();
     }
 

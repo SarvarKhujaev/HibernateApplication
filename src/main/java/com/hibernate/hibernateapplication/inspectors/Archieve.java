@@ -4,6 +4,8 @@ import org.hibernate.cfg.Environment;
 import java.util.Map;
 
 public class Archieve extends LogInspector {
+    protected Archieve () {}
+
     protected final Map< String, Object > dbSettings = Map.of(
             Environment.URL, "jdbc:postgresql://localhost:5432/postgres",
             Environment.USER, "postgres",

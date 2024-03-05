@@ -1,9 +1,9 @@
 package com.hibernate.hibernateapplication.database;
 
-import org.hibernate.*;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.MetadataSources;
+import org.hibernate.*;
 
 import com.hibernate.hibernateapplication.inspectors.Archieve;
 import com.hibernate.hibernateapplication.entities.*;
@@ -16,6 +16,22 @@ import java.util.List;
 import java.util.Set;
 
 public final class HibernateConnector extends Archieve {
+    public Session getSession() {
+        return this.session;
+    }
+
+    public SessionFactory getSessionFactory() {
+        return this.sessionFactory;
+    }
+
+    public ValidatorFactory getValidatorFactory() {
+        return this.validatorFactory;
+    }
+
+    public StandardServiceRegistry getRegistry() {
+        return this.registry;
+    }
+
     private final Session session;
     private final SessionFactory sessionFactory;
     private final ValidatorFactory validatorFactory;
@@ -28,7 +44,7 @@ public final class HibernateConnector extends Archieve {
     }
 
     private Transaction newTransaction () {
-        return this.session.beginTransaction();
+        return this.getSession().beginTransaction();
     }
 
     private HibernateConnector () {
@@ -42,7 +58,7 @@ public final class HibernateConnector extends Archieve {
         /*
         подключаемся к самой БД
         */
-        this.sessionFactory = new MetadataSources( this.registry )
+        this.sessionFactory = new MetadataSources( this.getRegistry() )
                 .addAnnotatedClass( User.class )
                 .addAnnotatedClass( Order.class )
                 .addAnnotatedClass( Product.class )
@@ -55,7 +71,7 @@ public final class HibernateConnector extends Archieve {
         /*
         открываем сессию
         */
-        this.session = this.sessionFactory.openSession();
+        this.session = this.getSessionFactory().openSession();
 
         /*
         создаем instance для валидации объектов
@@ -65,24 +81,24 @@ public final class HibernateConnector extends Archieve {
         /*
         настраиваем Second Level Cache
         */
-        this.sessionFactory.getCache().evictEntityData( User.class );
-        this.sessionFactory.getCache().evictEntityData( Order.class );
-        this.sessionFactory.getCache().evictEntityData( Product.class );
-        this.sessionFactory.getCache().evictEntityData( Student.class );
+        this.getSessionFactory().getCache().evictEntityData( User.class );
+        this.getSessionFactory().getCache().evictEntityData( Order.class );
+        this.getSessionFactory().getCache().evictEntityData( Product.class );
+        this.getSessionFactory().getCache().evictEntityData( Student.class );
 
         super.logging( this.getClass() );
     }
 
     public void save ( final User user ) {
         final Set< ConstraintViolation< User > > violations = super.checkEntityValidation(
-                this.validatorFactory.getValidator(),
+                this.getValidatorFactory().getValidator(),
                 user
         );
 
         if ( !super.isCollectionNotEmpty( violations ) ) {
             final Transaction transaction = this.newTransaction();
 
-            this.session.persist( user );
+            this.getSession().persist( user );
 
             transaction.commit();
         } else {
@@ -96,14 +112,14 @@ public final class HibernateConnector extends Archieve {
 
     public void save ( final Product object ) {
         final Set< ConstraintViolation< Product > > violations = super.checkEntityValidation(
-                this.validatorFactory.getValidator(),
+                this.getValidatorFactory().getValidator(),
                 object
         );
 
         if ( !super.isCollectionNotEmpty( violations ) ) {
             final Transaction transaction = this.newTransaction();
 
-            this.session.save( object );
+            this.getSession().save( object );
 
             transaction.commit();
         } else {
@@ -116,10 +132,10 @@ public final class HibernateConnector extends Archieve {
     }
 
     public void update ( final Order order ) {
-        final User user = this.session.get( User.class, 1L );
+        final User user = this.getSession().get( User.class, 1L );
         order.setUser( user );
 
-        final List< Product > products = this.session.createQuery(
+        final List< Product > products = this.getSession().createQuery(
                 """
                 FROM products
                 """
@@ -130,36 +146,36 @@ public final class HibernateConnector extends Archieve {
 
         final Transaction transaction = this.newTransaction();
 
-        this.session.persist( order );
+        this.getSession().persist( order );
 
         super.analyze(
                 order.getProductList(),
-                this.session::update
+                this.getSession()::update
         );
 
         transaction.commit();
     }
 
     public void update () {
-        final User user = this.session.get( User.class, 1L );
+        final User user = this.getSession().get( User.class, 1L );
 
-        final Order order = this.session.get( Order.class, 1L );
+        final Order order = this.getSession().get( Order.class, 1L );
 
         user.removeNewOrder( order );
 
         final Transaction transaction = this.newTransaction();
 
-        this.session.persist( user );
+        this.getSession().persist( user );
 
         transaction.commit();
     }
 
     public void delete () {
-        final User user = this.session.get( User.class, 1L );
+        final User user = this.getSession().get( User.class, 1L );
 
         final Transaction transaction = this.newTransaction();
 
-        this.session.delete( user );
+        this.getSession().delete( user );
 
         transaction.commit();
 
@@ -169,7 +185,7 @@ public final class HibernateConnector extends Archieve {
     public void test () {
         final Transaction transaction = this.newTransaction();
 
-        final ScrollableResults< Product > scrollableResults = this.session.createQuery(
+        final ScrollableResults< Product > scrollableResults = this.getSession().createQuery(
                         """
                         FROM products
                         """
@@ -185,11 +201,13 @@ public final class HibernateConnector extends Archieve {
         scrollableResults.close();
     }
 
-    public void close () {
-        this.session.clear();
-        this.session.close();
-        this.sessionFactory.close();
-        StandardServiceRegistryBuilder.destroy( this.registry );
+    public synchronized void close () {
+        this.getSession().clear();
+        this.getSession().close();
+        this.getSessionFactory().close();
+        StandardServiceRegistryBuilder.destroy( this.getRegistry() );
+
+        connector = null;
 
         super.logging( this );
     }
