@@ -189,7 +189,7 @@ public final class HibernateConnector extends Archieve {
                         """
                         FROM products
                         """
-                ).setCacheMode( CacheMode.IGNORE )
+                ).setCacheMode( CacheMode.GET )
                 .scroll( ScrollMode.FORWARD_ONLY );
 
         while ( scrollableResults.next() ) {

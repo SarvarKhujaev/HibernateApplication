@@ -15,19 +15,25 @@ public class CollectionsInspector extends DataValidateInspector {
         return new ArrayList<>();
     }
 
+    protected  <T> List<T> newList ( final T ... objects ) {
+        return List.of( objects );
+    }
+
     protected <T, V> Map<T, V> newMap () {
         return new HashMap<>();
     }
 
     public <T> void analyze (
             final Collection<T> someList,
-            final Consumer<T> someConsumer ) {
+            final Consumer<T> someConsumer
+    ) {
         someList.forEach( someConsumer );
     }
 
     protected <T, V> void analyze (
             final Map< T, V > someList,
-            final BiConsumer<T, V> someConsumer ) {
+            final BiConsumer<T, V> someConsumer
+    ) {
         someList.forEach( someConsumer );
     }
 
