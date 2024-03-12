@@ -1,15 +1,11 @@
 package com.hibernate.hibernateapplication.inspectors;
 
 import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ValidatorFactory;
-import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 
 import java.util.Set;
 
 public class DataValidateInspector {
-    private final ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
-
     protected DataValidateInspector () {}
 
     protected boolean objectIsNotNull (

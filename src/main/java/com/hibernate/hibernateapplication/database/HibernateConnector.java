@@ -1,21 +1,23 @@
 package com.hibernate.hibernateapplication.database;
 
+import com.hibernate.hibernateapplication.interfaces.ServiceCommonMethods;
+import com.hibernate.hibernateapplication.inspectors.Archieve;
+import com.hibernate.hibernateapplication.entities.*;
+
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.*;
 
-import com.hibernate.hibernateapplication.inspectors.Archieve;
-import com.hibernate.hibernateapplication.entities.*;
-
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ValidatorFactory;
 import jakarta.validation.Validation;
+import org.hibernate.query.Query;
 
 import java.util.List;
 import java.util.Set;
 
-public final class HibernateConnector extends Archieve {
+public final class HibernateConnector extends Archieve implements ServiceCommonMethods {
     public Session getSession() {
         return this.session;
     }
@@ -107,7 +109,6 @@ public final class HibernateConnector extends Archieve {
                     userConstraintViolation -> super.logging( userConstraintViolation.getMessage() )
             );
         }
-
     }
 
     public void save ( final Product object ) {
@@ -201,12 +202,28 @@ public final class HibernateConnector extends Archieve {
         scrollableResults.close();
     }
 
+    public void get () {
+        final Query< Order > orders = this.getSession().createQuery(
+                "FROM orders WHERE user.id = :user_id",
+                Order.class
+        );
+
+        orders.setParameter( "user_id", 10 );
+
+        super.analyze(
+                orders.getResultList(),
+                order -> super.logging( order.getId() )
+        );
+    }
+
     /*
     закрывам все соединения и instance
      */
+    @Override
     public synchronized void close () {
         this.getSession().clear();
         this.getSession().close();
+        this.validatorFactory.close();
         this.getSessionFactory().close();
         StandardServiceRegistryBuilder.destroy( this.getRegistry() );
 

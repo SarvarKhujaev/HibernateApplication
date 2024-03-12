@@ -3,6 +3,9 @@ package com.hibernate.hibernateapplication.constans;
 /*
 https://www.geeksforgeeks.org/hibernate-validator-with-example/
 */
+/*
+хранит сообщения об ошибках при работе с параметрами таблиц
+*/
 public final class ErrorMessages {
     public static final String WRONG_EMAIL = "WRONG EMAIL FORMAT WAS INSERTED";
 
