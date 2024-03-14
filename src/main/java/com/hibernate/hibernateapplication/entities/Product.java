@@ -4,7 +4,6 @@ import com.hibernate.hibernateapplication.inspectors.TimeInspector;
 import com.hibernate.hibernateapplication.constans.ErrorMessages;
 import com.hibernate.hibernateapplication.constans.Categories;
 
-import jakarta.validation.Constraint;
 import jakarta.validation.constraints.*;
 import jakarta.persistence.*;
 

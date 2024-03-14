@@ -91,26 +91,6 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
         super.logging( this.getClass() );
     }
 
-    public void save ( final User user ) {
-        final Set< ConstraintViolation< User > > violations = super.checkEntityValidation(
-                this.getValidatorFactory().getValidator(),
-                user
-        );
-
-        if ( !super.isCollectionNotEmpty( violations ) ) {
-            final Transaction transaction = this.newTransaction();
-
-            this.getSession().persist( user );
-
-            transaction.commit();
-        } else {
-            super.analyze(
-                    violations,
-                    userConstraintViolation -> super.logging( userConstraintViolation.getMessage() )
-            );
-        }
-    }
-
     public void save ( final Product object ) {
         final Set< ConstraintViolation< Product > > violations = super.checkEntityValidation(
                 this.getValidatorFactory().getValidator(),
@@ -130,6 +110,26 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
             );
         }
 
+    }
+
+    public void save ( final User user ) {
+        final Set< ConstraintViolation< User > > violations = super.checkEntityValidation(
+                this.getValidatorFactory().getValidator(),
+                user
+        );
+
+        if ( !super.isCollectionNotEmpty( violations ) ) {
+            final Transaction transaction = this.newTransaction();
+
+            this.getSession().persist( user );
+
+            transaction.commit();
+        } else {
+            super.analyze(
+                    violations,
+                    userConstraintViolation -> super.logging( userConstraintViolation.getMessage() )
+            );
+        }
     }
 
     public void update ( final Order order ) {
@@ -218,13 +218,13 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
 
     /*
     закрывам все соединения и instance
-     */
+    */
     @Override
     public synchronized void close () {
         this.getSession().clear();
         this.getSession().close();
-        this.validatorFactory.close();
         this.getSessionFactory().close();
+        this.getValidatorFactory().close();
         StandardServiceRegistryBuilder.destroy( this.getRegistry() );
 
         connector = null;
