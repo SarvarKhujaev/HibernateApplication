@@ -65,10 +65,6 @@ public class Product extends TimeInspector {
         return this.createdDate;
     }
 
-    public void setCreatedDate ( final Date createdDate ) {
-        this.createdDate = createdDate;
-    }
-
     public Categories getCategory() {
         return this.category;
     }
@@ -113,7 +109,7 @@ public class Product extends TimeInspector {
     // дата создания товара
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @Column( nullable = false, columnDefinition = "TIMESTAMP DEFAULT now()", name = "created_date" )
-    private Date createdDate = super.newDate();
+    private final Date createdDate = super.newDate();
 
     // https://www.baeldung.com/jpa-default-column-values
     @NotNull( message = ErrorMessages.NULL_VALUE )

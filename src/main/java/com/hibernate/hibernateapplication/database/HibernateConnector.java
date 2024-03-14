@@ -26,12 +26,12 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
         return this.sessionFactory;
     }
 
-    public ValidatorFactory getValidatorFactory() {
-        return this.validatorFactory;
-    }
-
     public StandardServiceRegistry getRegistry() {
         return this.registry;
+    }
+
+    public ValidatorFactory getValidatorFactory() {
+        return this.validatorFactory;
     }
 
     private final Session session;
@@ -134,6 +134,7 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
 
     public void update ( final Order order ) {
         final User user = this.getSession().get( User.class, 1L );
+
         order.setUser( user );
 
         final List< Product > products = this.getSession().createQuery(
@@ -148,11 +149,6 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
         final Transaction transaction = this.newTransaction();
 
         this.getSession().persist( order );
-
-        super.analyze(
-                order.getProductList(),
-                this.getSession()::update
-        );
 
         transaction.commit();
     }
@@ -194,8 +190,7 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
                 .scroll( ScrollMode.FORWARD_ONLY );
 
         while ( scrollableResults.next() ) {
-            final Product product = scrollableResults.get();
-            System.out.println( product.getId() );
+            super.logging( scrollableResults.get().getId() );
         }
 
         transaction.commit();
@@ -214,6 +209,57 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
                 orders.getResultList(),
                 order -> super.logging( order.getId() )
         );
+    }
+
+    public void insertOrders () {
+        final List< User > users = this.getSession().createQuery(
+                """
+                FROM users WHERE id IN ( 1, 2, 3, 4 )
+                """
+        ).getResultList();
+
+        final List< Product > products = this.getSession().createQuery(
+                """
+                FROM products WHERE id IN ( 1, 2, 3, 4, 5, 6 )
+                """
+        ).getResultList();
+
+        final Transaction transaction = this.newTransaction();
+
+        for ( final User user : users ) {
+            for ( int j = 0; j < 10; j++ ) {
+                final Order order = new Order();
+
+                order.setProductList( products );
+                order.initializeProductList();
+
+                user.addNewOrder( order );
+
+                this.getSession().persist( order );
+
+                super.analyze(
+                        order.getProductList(),
+                        this.session::update
+                );
+            }
+        }
+
+        transaction.commit();
+
+        super.logging( transaction.getStatus() );
+    }
+
+    public void getUserOrders () {
+        final Transaction transaction = this.newTransaction();
+
+        final User user = this.getSession().get( User.class, 1L );
+
+        super.analyze(
+                user.getOrders(),
+                order -> super.logging( order.getId().toString() )
+        );
+
+        transaction.commit();
     }
 
     /*

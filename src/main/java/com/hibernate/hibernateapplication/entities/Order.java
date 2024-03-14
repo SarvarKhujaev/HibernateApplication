@@ -82,10 +82,6 @@ public class Order extends TimeInspector {
         this.id = id;
     }
 
-    public void setCreatedDate(Date createdDate) {
-        this.createdDate = createdDate;
-    }
-
     // общая стоимость заказа
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @Positive( message = ErrorMessages.VALUE_MUST_BE_POSITIVE)
@@ -100,7 +96,6 @@ public class Order extends TimeInspector {
 
     // https://www.baeldung.com/jpa-default-column-values
     @NotNull( message = ErrorMessages.NULL_VALUE )
-    @NotBlank( message = ErrorMessages.NULL_VALUE )
     @Enumerated( value = EnumType.STRING )
     @Column( name = "order_status", nullable = false )
     private OrderStatus orderStatus = OrderStatus.CREATED;
@@ -111,7 +106,7 @@ public class Order extends TimeInspector {
 
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @Column( nullable = false, columnDefinition = "TIMESTAMP DEFAULT now()", name = "created_date" )
-    private Date createdDate = super.newDate(); // дата создания аккаунта
+    private final Date createdDate = super.newDate(); // дата создания аккаунта
 
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @ManyToOne( fetch = FetchType.LAZY )

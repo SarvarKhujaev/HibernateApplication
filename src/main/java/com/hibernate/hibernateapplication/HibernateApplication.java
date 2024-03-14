@@ -1,9 +1,9 @@
 package com.hibernate.hibernateapplication;
 
-import org.junit.runner.JUnitCore;
 import junit.extensions.RepeatedTest;
 import junit.framework.JUnit4TestAdapter;
 
+import org.junit.runner.JUnitCore;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 

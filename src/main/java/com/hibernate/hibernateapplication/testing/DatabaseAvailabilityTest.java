@@ -24,7 +24,6 @@ public class DatabaseAvailabilityTest extends TestCase {
     @Override
     public void tearDown () {
         this.connector = null;
-        System.out.println( "closed" );
     }
 
     /*

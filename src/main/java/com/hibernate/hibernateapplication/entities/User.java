@@ -74,7 +74,7 @@ public class User extends TimeInspector {
 
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @Column( nullable = false, columnDefinition = "TIMESTAMP DEFAULT now()", name = "created_date" )
-    private Date createdDate = super.newDate(); // дата создания аккаунта
+    private final Date createdDate = super.newDate(); // дата создания аккаунта
 
     @OneToMany(
             orphanRemoval = true,
