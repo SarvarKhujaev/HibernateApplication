@@ -15,27 +15,59 @@ import java.util.Date;
 @Entity( name = "products" )
 @Table( name = "products", schema = "entities" )
 @Cacheable
-@org.hibernate.annotations.NamedNativeQuery(
-        name = HibernateNativeNamedQueries.PRODUCTS_GET_PRODUCT_WITH_RIGHT_STATUS_DUE_TO_COUNT,
+@SqlResultSetMappings(
+        value = {
+                @SqlResultSetMapping(
+                        name = HibernateNativeNamedQueries.PRODUCTS_GET_PRODUCT_WITH_RIGHT_STATUS_DUE_TO_COUNT_SETTER,
+                        classes = {
+                                @ConstructorResult(
+                                        targetClass = ProductDescription.class,
+                                        columns = {
+                                                @ColumnResult(
+                                                        name = "id"
+                                                ),
+                                                @ColumnResult(
+                                                        name = "price"
+                                                ),
+                                                @ColumnResult(
+                                                        name = "createdDate"
+                                                ),
+                                                @ColumnResult(
+                                                        name = "productPriceSize"
+                                                )
+                                        }
+                                )
+                        }
+                )
+        }
+)
+@org.hibernate.annotations.NamedNativeQueries(
+        value = {
+                @org.hibernate.annotations.NamedNativeQuery(
+                        name = HibernateNativeNamedQueries.PRODUCTS_GET_PRODUCT_WITH_RIGHT_STATUS_DUE_TO_COUNT,
 
-        query = """
-                SELECT id, price, created_date AS createdDate,
+                        query = """
+                            SELECT id, price, created_date AS createdDate,
 
-                CASE
-                WHEN price > 1000 THEN 'expensive'
-                WHEN price < 500 AND price > 100 THEN 'cheap'
-                WHEN price < 1000 AND price > 500 THEN 'middle'
-                ELSE 'normal'
-                END productPriceSize
+                            CASE
+                            WHEN price > 1000 THEN 'expensive'
+                            WHEN price BETWEEN 500 AND 100 THEN 'cheap'
+                            WHEN price BETWEEN 1000 AND 500 THEN 'middle'
+                            ELSE 'normal'
+                            END productPriceSize
 
-                FROM entities.products
-                """,
+                            FROM entities.products
+                            ORDER BY :order
+                            LIMIT :limit
+                            """,
 
-        timeout = 1,
-        readOnly = true,
-        cacheable = true,
-        cacheMode = CacheModeType.GET,
-        resultClass = ProductDescription.class
+                        timeout = 1,
+                        readOnly = true,
+                        cacheable = true,
+                        cacheMode = CacheModeType.GET,
+                        resultSetMapping = HibernateNativeNamedQueries.PRODUCTS_GET_PRODUCT_WITH_RIGHT_STATUS_DUE_TO_COUNT_SETTER
+                )
+        }
 )
 public class Product extends TimeInspector {
     public long getId() {

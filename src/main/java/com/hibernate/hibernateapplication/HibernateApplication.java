@@ -7,7 +7,8 @@ import com.hibernate.hibernateapplication.database.HibernateConnector;
 @SpringBootApplication
 public class HibernateApplication {
     public static void main( final String[] args ) {
-        SpringApplication.run( HibernateApplication.class, args );
+//        SpringApplication.run( HibernateApplication.class, args );
+        HibernateConnector.getInstance().checkNewNativeQuery();
         HibernateConnector.getInstance().close();
     }
 }

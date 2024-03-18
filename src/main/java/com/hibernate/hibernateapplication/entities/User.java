@@ -43,6 +43,30 @@ public class User extends TimeInspector {
         order.setUser( null );
     }
 
+    public String getName() {
+        return this.name;
+    }
+
+    public String getEmail() {
+        return this.email;
+    }
+
+    public String getSurname() {
+        return this.surname;
+    }
+
+    public String getPhoneNumber() {
+        return this.phoneNumber;
+    }
+
+    public Long getId() {
+        return this.id;
+    }
+
+    public Date getCreatedDate() {
+        return this.createdDate;
+    }
+
     @Size( min = 3, max = 50, message = ErrorMessages.VALUE_OUT_OF_RANGE )
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @NotBlank( message = ErrorMessages.NULL_VALUE )

@@ -7,28 +7,28 @@ public final class ProductDescription {
         return this.id;
     }
 
-    public void setId ( final Long id ) {
-        this.id = id;
-    }
-
     public Long getPrice() {
         return this.price;
-    }
-
-    public void setPrice ( final Long price ) {
-        this.price = price;
     }
 
     public Date getCreateaDate() {
         return this.createaDate;
     }
 
-    public void setCreateaDate ( final Date createaDate ) {
-        this.createaDate = createaDate;
-    }
-
     public String getProductPriceSize() {
         return this.productPriceSize;
+    }
+
+    public void setId ( final Long id ) {
+        this.id = id;
+    }
+
+    public void setPrice ( final Long price ) {
+        this.price = price;
+    }
+
+    public void setCreateaDate ( final Date createaDate ) {
+        this.createaDate = createaDate;
     }
 
     public void setProductPriceSize ( final String productPriceSize ) {
@@ -49,9 +49,9 @@ public final class ProductDescription {
             final Date createaDate,
             final String productPriceSize
     ) {
-        this.id = id;
-        this.price = price;
-        this.createaDate = createaDate;
-        this.productPriceSize = productPriceSize;
+        this.setId( id );
+        this.setPrice( price );
+        this.setCreateaDate( createaDate );
+        this.setProductPriceSize( productPriceSize );
     }
 }

@@ -145,4 +145,12 @@ public class Order extends TimeInspector {
     private List< Product > productList = super.newList();
 
     public Order () {}
+
+    public Order(
+            final Long id,
+            final OrderStatus orderStatus
+    ) {
+        this.orderStatus = orderStatus;
+        this.id = id;
+    }
 }

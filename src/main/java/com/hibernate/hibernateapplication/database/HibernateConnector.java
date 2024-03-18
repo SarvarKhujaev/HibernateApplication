@@ -9,6 +9,7 @@ import com.hibernate.hibernateapplication.entities.*;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.MetadataSources;
+import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
 import org.hibernate.*;
 
@@ -16,7 +17,6 @@ import jakarta.persistence.criteria.ParameterExpression;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
-import jakarta.persistence.TypedQuery;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ValidatorFactory;
@@ -235,45 +235,34 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
 
         final Root< Order > root = criteriaQuery.from( Order.class );
 
-        criteriaQuery.distinct( true );
-        criteriaQuery.groupBy( root.get( "status" ) );
-
-        /*
-        делаем выборку нескольких полей таблицы
-         */
-        criteriaQuery.multiselect( root.get( "id" ), root.get( "status" ) );
-
         /*
         готовим параметры для запроса
          */
         final ParameterExpression< Long > idParam = builder.parameter( Long.class );
-        final ParameterExpression< String > nameParam = builder.parameter( String.class );
         final ParameterExpression< OrderStatus > orderStatusParam = builder.parameter( OrderStatus.class );
 
-        criteriaQuery.where(
-                builder.or(
-                        builder.and(
-                                root.get( "name" ).isNotNull(),
-                                builder.equal( root.get( "id" ), idParam ),
-                                builder.like( root.get( "name" ), nameParam )
-                        ),
-                        builder.and(
-                                builder.equal( root.get( "status" ), orderStatusParam )
+        criteriaQuery
+                .distinct( true )
+                .multiselect( root.get( "id" ), root.get( "orderStatus" ) )
+                .where(
+                        builder.or(
+                                builder.and(
+                                        root.get( "totalOrderSum" ).isNotNull(),
+                                        builder.equal( root.get( "id" ), idParam )
+                                ),
+                                builder.and(
+                                        builder.equal( root.get( "orderStatus" ), orderStatusParam )
+                                )
                         )
-                )
-        );
-
-        criteriaQuery.orderBy(  );
-
-        final TypedQuery< Order > typedQuery = this.getSession().createQuery( criteriaQuery );
-
-        typedQuery.setParameter( idParam, 1L );
-        typedQuery.setParameter( nameParam, "%test%" );
-        typedQuery.setParameter( orderStatusParam, OrderStatus.ARRIVED );
+                );
 
         super.analyze(
-                typedQuery.getResultList(),
-                order -> super.logging( order.getOrderStatus() )
+                this.getSession()
+                        .createQuery( criteriaQuery )
+                        .setParameter( idParam, 5L )
+                        .setParameter( orderStatusParam, OrderStatus.CREATED )
+                        .getResultList(),
+                order -> super.logging( order.getCreatedDate().toString() )
         );
     }
 
@@ -288,7 +277,7 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
             .addScalar("name", StandardBasicTypes.STRING)
             .list();
          */
-        this.getSession().createNativeQuery(
+        final NativeQuery< Object[] > nativeQuery = this.getSession().createNativeQuery(
                 MessageFormat.format(
                         """
                         SELECT * FROM {0}.{1}
@@ -299,12 +288,19 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
                         5
                 ),
                 Object[].class
-        ).addScalar( "id", Long.class )
-                .addScalar( "name", String.class );
+        );
+
+        nativeQuery.addScalar( "id", Long.class );
+        nativeQuery.addScalar( "total_order_sum", Long.class );
+
+        super.analyze(
+                nativeQuery.getResultList(),
+                objects -> System.out.println( objects[0] + " : " + objects[1] )
+        );
     }
 
     public void joinExample () {
-        this.getSession().createNativeQuery(
+        final NativeQuery< Order > nativeQuery = this.getSession().createNativeQuery(
                 """
                 SELECT {o.*}, {u.*}
                 FROM entities.orders o
@@ -312,8 +308,16 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
                 """,
                 Order.class,
                 "o"
-        ).addJoin( "u", "o.user" )
-                .setTupleTransformer( ( tuple, aliases ) -> (Order) tuple[0] );
+        );
+
+        nativeQuery.addJoin( "u", "o.user" );
+
+        nativeQuery.setTupleTransformer( ( tuple, aliases ) -> (Order) tuple[0] );
+
+        super.analyze(
+                nativeQuery.list(),
+                order -> System.out.println( order.getUser().getName() )
+        );
     }
 
     public void insertOrders () {
@@ -368,14 +372,19 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
     }
 
     public void checkNewNativeQuery () {
-        final List< ProductDescription > productDescriptions = this.getSession().createNativeQuery(
-                HibernateNativeNamedQueries.PRODUCTS_GET_PRODUCT_WITH_RIGHT_STATUS_DUE_TO_COUNT,
-                ProductDescription.class
-        ).getResultList();
-
         super.analyze(
-                productDescriptions,
-                super::logging
+                this.getSession().createNamedQuery(
+                        HibernateNativeNamedQueries.PRODUCTS_GET_PRODUCT_WITH_RIGHT_STATUS_DUE_TO_COUNT,
+                        ProductDescription.class
+                ).setParameter( "order", "price DESC, createdDate ASC" )
+                        .setParameter( "limit", 30 )
+                        .list(),
+
+                productDescription -> super.logging(
+                        productDescription.getId()
+                        + " : "
+                        + productDescription.getProductPriceSize()
+                )
         );
     }
 
