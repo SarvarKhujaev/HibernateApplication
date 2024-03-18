@@ -1,19 +1,28 @@
 package com.hibernate.hibernateapplication.database;
 
+import com.hibernate.hibernateapplication.constans.hibernate.HibernateNativeNamedQueries;
 import com.hibernate.hibernateapplication.interfaces.ServiceCommonMethods;
+import com.hibernate.hibernateapplication.constans.OrderStatus;
 import com.hibernate.hibernateapplication.inspectors.Archieve;
 import com.hibernate.hibernateapplication.entities.*;
 
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.MetadataSources;
+import org.hibernate.query.Query;
 import org.hibernate.*;
+
+import jakarta.persistence.criteria.ParameterExpression;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.TypedQuery;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ValidatorFactory;
 import jakarta.validation.Validation;
-import org.hibernate.query.Query;
 
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Set;
 
@@ -219,6 +228,94 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
         );
     }
 
+    public void getWithCriteria () {
+        final CriteriaBuilder builder = this.getSession().getCriteriaBuilder();
+
+        final CriteriaQuery< Order > criteriaQuery = builder.createQuery( Order.class );
+
+        final Root< Order > root = criteriaQuery.from( Order.class );
+
+        criteriaQuery.distinct( true );
+        criteriaQuery.groupBy( root.get( "status" ) );
+
+        /*
+        делаем выборку нескольких полей таблицы
+         */
+        criteriaQuery.multiselect( root.get( "id" ), root.get( "status" ) );
+
+        /*
+        готовим параметры для запроса
+         */
+        final ParameterExpression< Long > idParam = builder.parameter( Long.class );
+        final ParameterExpression< String > nameParam = builder.parameter( String.class );
+        final ParameterExpression< OrderStatus > orderStatusParam = builder.parameter( OrderStatus.class );
+
+        criteriaQuery.where(
+                builder.or(
+                        builder.and(
+                                root.get( "name" ).isNotNull(),
+                                builder.equal( root.get( "id" ), idParam ),
+                                builder.like( root.get( "name" ), nameParam )
+                        ),
+                        builder.and(
+                                builder.equal( root.get( "status" ), orderStatusParam )
+                        )
+                )
+        );
+
+        criteriaQuery.orderBy(  );
+
+        final TypedQuery< Order > typedQuery = this.getSession().createQuery( criteriaQuery );
+
+        typedQuery.setParameter( idParam, 1L );
+        typedQuery.setParameter( nameParam, "%test%" );
+        typedQuery.setParameter( orderStatusParam, OrderStatus.ARRIVED );
+
+        super.analyze(
+                typedQuery.getResultList(),
+                order -> super.logging( order.getOrderStatus() )
+        );
+    }
+
+    public void getWithNativeQuery () {
+        /*
+        To avoid the overhead of using ResultSetMetadata, or simply to be more explicit in what is returned, one can use addScalar():
+
+        Example;
+            List<Object[]> persons = session.createNativeQuery(
+                "SELECT * FROM Person", Object[].class)
+            .addScalar("id", StandardBasicTypes.LONG)
+            .addScalar("name", StandardBasicTypes.STRING)
+            .list();
+         */
+        this.getSession().createNativeQuery(
+                MessageFormat.format(
+                        """
+                        SELECT * FROM {0}.{1}
+                        WHERE id = {2};
+                        """,
+                        "entities",
+                        "orders",
+                        5
+                ),
+                Object[].class
+        ).addScalar( "id", Long.class )
+                .addScalar( "name", String.class );
+    }
+
+    public void joinExample () {
+        this.getSession().createNativeQuery(
+                """
+                SELECT {o.*}, {u.*}
+                FROM entities.orders o
+                JOIN entities.users u ON u.id = o.user_id;
+                """,
+                Order.class,
+                "o"
+        ).addJoin( "u", "o.user" )
+                .setTupleTransformer( ( tuple, aliases ) -> (Order) tuple[0] );
+    }
+
     public void insertOrders () {
         final List< User > users = this.getSession().createQuery(
                 """
@@ -268,6 +365,18 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
         );
 
         transaction.commit();
+    }
+
+    public void checkNewNativeQuery () {
+        final List< ProductDescription > productDescriptions = this.getSession().createNativeQuery(
+                HibernateNativeNamedQueries.PRODUCTS_GET_PRODUCT_WITH_RIGHT_STATUS_DUE_TO_COUNT,
+                ProductDescription.class
+        ).getResultList();
+
+        super.analyze(
+                productDescriptions,
+                super::logging
+        );
     }
 
     /*

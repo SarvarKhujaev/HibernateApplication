@@ -1,8 +1,11 @@
 package com.hibernate.hibernateapplication.entities;
 
+import com.hibernate.hibernateapplication.constans.hibernate.HibernateNativeNamedQueries;
 import com.hibernate.hibernateapplication.inspectors.TimeInspector;
 import com.hibernate.hibernateapplication.constans.ErrorMessages;
 import com.hibernate.hibernateapplication.constans.OrderStatus;
+
+import org.hibernate.annotations.CacheModeType;
 
 import jakarta.validation.constraints.*;
 import jakarta.persistence.*;
@@ -12,6 +15,22 @@ import java.util.List;
 
 @Entity( name = "orders" )
 @Table( name = "orders", schema = "entities" )
+@org.hibernate.annotations.NamedNativeQuery(
+        name = HibernateNativeNamedQueries.ORDERS_GET_ORDERS_GROUP_VALUES,
+
+        query = """
+                SELECT status AS orderStatus, COUNT() AS totalCount
+                FROM entities.orders
+                WHERE created_date < now()
+                GROUP BY ( orderStatus )
+                """,
+
+        timeout = 1,
+        readOnly = true,
+        cacheable = true,
+        cacheMode = CacheModeType.GET,
+        resultClass = OrderStatusCount.class
+)
 public class Order extends TimeInspector {
     public Long getId() {
         return this.id;

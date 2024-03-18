@@ -1,8 +1,11 @@
 package com.hibernate.hibernateapplication.entities;
 
+import com.hibernate.hibernateapplication.constans.hibernate.HibernateNativeNamedQueries;
 import com.hibernate.hibernateapplication.inspectors.TimeInspector;
 import com.hibernate.hibernateapplication.constans.ErrorMessages;
 import com.hibernate.hibernateapplication.constans.Categories;
+
+import org.hibernate.annotations.CacheModeType;
 
 import jakarta.validation.constraints.*;
 import jakarta.persistence.*;
@@ -12,6 +15,28 @@ import java.util.Date;
 @Entity( name = "products" )
 @Table( name = "products", schema = "entities" )
 @Cacheable
+@org.hibernate.annotations.NamedNativeQuery(
+        name = HibernateNativeNamedQueries.PRODUCTS_GET_PRODUCT_WITH_RIGHT_STATUS_DUE_TO_COUNT,
+
+        query = """
+                SELECT id, price, created_date AS createdDate,
+
+                CASE
+                WHEN price > 1000 THEN 'expensive'
+                WHEN price < 500 AND price > 100 THEN 'cheap'
+                WHEN price < 1000 AND price > 500 THEN 'middle'
+                ELSE 'normal'
+                END productPriceSize
+
+                FROM entities.products
+                """,
+
+        timeout = 1,
+        readOnly = true,
+        cacheable = true,
+        cacheMode = CacheModeType.GET,
+        resultClass = ProductDescription.class
+)
 public class Product extends TimeInspector {
     public long getId() {
         return this.id;
