@@ -36,8 +36,8 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
 
     private final Session session;
     private final SessionFactory sessionFactory;
-    private final ValidatorFactory validatorFactory;
     private final StandardServiceRegistry registry;
+    private final ValidatorFactory validatorFactory;
 
     private static HibernateConnector connector = new HibernateConnector();
 
@@ -199,9 +199,17 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
 
     public void get () {
         final Query< Order > orders = this.getSession().createQuery(
-                "FROM orders WHERE user.id = :user_id",
+                "FROM orders WHERE user.id = :user_id ORDER BY createdDate",
                 Order.class
         );
+
+        orders.setFirstResult( 5 );
+        orders.setMaxResults( 100 );
+
+        orders.setCacheable( true );
+
+        orders.setCacheMode( CacheMode.GET );
+        orders.setComment( "Select all orders for current user" );
 
         orders.setParameter( "user_id", 10 );
 
