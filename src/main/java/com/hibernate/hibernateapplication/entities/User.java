@@ -5,6 +5,10 @@ import com.hibernate.hibernateapplication.constans.PostgreSqlTables;
 import com.hibernate.hibernateapplication.inspectors.TimeInspector;
 import com.hibernate.hibernateapplication.constans.ErrorMessages;
 
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.PartitionKey;
+import org.hibernate.annotations.Immutable;
+
 import jakarta.validation.constraints.*;
 import jakarta.persistence.*;
 
@@ -13,7 +17,10 @@ import java.util.List;
 
 @Entity( name = PostgreSqlTables.USERS )
 @Table( name = PostgreSqlTables.USERS, schema = PostgreSqlSchema.ENTITIES )
-@Cacheable // настраиваем First Level Cache
+@Cacheable // настраиваем Second Level Cache
+@org.hibernate.annotations.Cache(
+        usage = CacheConcurrencyStrategy.READ_ONLY
+)
 public class User extends TimeInspector {
     public List< Order > getOrders() {
         return this.orders;
@@ -79,7 +86,7 @@ public class User extends TimeInspector {
     @Email( message = ErrorMessages.WRONG_EMAIL )
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @NotBlank( message = ErrorMessages.NULL_VALUE )
-    @Column( nullable = false, length = 30 )
+    @Column( nullable = false, length = 30, unique = true )
     private String email;
 
     @Size( min = 3, max = 20, message = ErrorMessages.VALUE_OUT_OF_RANGE )
@@ -91,13 +98,15 @@ public class User extends TimeInspector {
     @Size( min = 3, max = 20, message = ErrorMessages.VALUE_OUT_OF_RANGE )
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @NotBlank( message = ErrorMessages.NULL_VALUE )
-    @Column( nullable = false, length = 20, name = "phone_number" )
+    @Column( nullable = false, length = 20, name = "phone_number", unique = true )
     private String phoneNumber;
 
     @Id
     @GeneratedValue( strategy = GenerationType.IDENTITY )
     private Long id;
 
+    @Immutable
+    @PartitionKey
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @Column( nullable = false, columnDefinition = "TIMESTAMP DEFAULT now()", name = "created_date" )
     private final Date createdDate = super.newDate(); // дата создания аккаунта
@@ -109,7 +118,17 @@ public class User extends TimeInspector {
             fetch = FetchType.LAZY
     )
     @OrderBy( value = "totalOrderSum DESC, totalCountOfProductsInOrder DESC" )
+    @Immutable
     @JoinColumn( name = "user_id" )
+    /*
+    Hibernate can also cache collections, and the @Cache annotation must be on added to the collection property.
+
+    If the collection is made of value types (basic or embeddables mapped with @ElementCollection),
+    the collection is stored as such.
+    If the collection contains other entities (@OneToMany or @ManyToMany),
+    the collection cache entry will store the entity identifiers only.
+    */
+    @org.hibernate.annotations.Cache( usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE )
     private List< Order > orders = super.newList();
 
     public User () {}

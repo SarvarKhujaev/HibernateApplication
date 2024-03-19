@@ -2,6 +2,7 @@ package com.hibernate.hibernateapplication.database;
 
 import com.hibernate.hibernateapplication.constans.hibernate.HibernateNativeNamedQueries;
 import com.hibernate.hibernateapplication.interfaces.ServiceCommonMethods;
+import com.hibernate.hibernateapplication.constans.PostgreSqlTables;
 import com.hibernate.hibernateapplication.constans.OrderStatus;
 import com.hibernate.hibernateapplication.inspectors.Archive;
 import com.hibernate.hibernateapplication.entities.*;
@@ -9,6 +10,10 @@ import com.hibernate.hibernateapplication.entities.*;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.MetadataSources;
+
+import org.hibernate.stat.CacheRegionStatistics;
+import org.hibernate.stat.Statistics;
+
 import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
 import org.hibernate.*;
@@ -73,6 +78,7 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
                 .addAnnotatedClass( User.class )
                 .addAnnotatedClass( Order.class )
                 .addAnnotatedClass( Product.class )
+                .addAnnotatedClass( Student.class )
                 .getMetadataBuilder()
                 .build()
                 .getSessionFactoryBuilder()
@@ -101,6 +107,26 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
         this.getSession().setJdbcBatchSize( 30 );
 
         super.logging( this.getClass() );
+    }
+
+    private void checkBatchLimit (
+            final int operationsCounter
+    ) {
+        /*
+                проверяем что количество операций не превысило
+                макс количество Batch
+                 */
+        if ( operationsCounter > 0 && ( operationsCounter & super.BATCH_SIZE ) == 0 ) {
+                    /*
+                    если да, то освобождаем пространство в кеше
+                    на уровне first-level cache
+
+                    When you make new objects persistent, employ methods flush() and clear() to the session regularly,
+                    to control the size of the first-level cache.
+                     */
+            this.getSession().flush();
+            this.getSession().clear();
+        }
     }
 
     public void save ( final Product object ) {
@@ -201,7 +227,11 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
                 ).setCacheMode( CacheMode.GET )
                 .scroll( ScrollMode.FORWARD_ONLY );
 
+        int operationsCounter = 0;
+
         while ( scrollableResults.next() ) {
+            this.checkBatchLimit( ++operationsCounter );
+
             super.logging( scrollableResults.get().getId() );
         }
 
@@ -217,8 +247,6 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
         orders.setFirstResult( 5 );
         orders.setMaxResults( 100 );
-
-        orders.setCacheable( true );
 
         orders.setCacheMode( CacheMode.GET );
         orders.setComment( "Select all orders for current user" );
@@ -344,28 +372,14 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
         for ( final User user : users ) {
             for ( int j = 0; j < 5; j++ ) {
-                /*
-                проверяем что количество операций не превысило
-                макс количество Batch
-                 */
-                if ( operationsCounter++ > 0 && ( operationsCounter & super.BATCH_SIZE ) == 0 ) {
-                    /*
-                    если да, то освобождаем пространство в кеше
-                    на уровне first-level cache
-
-                    When you make new objects persistent, employ methods flush() and clear() to the session regularly,
-                    to control the size of the first-level cache.
-                     */
-                    this.getSession().flush();
-                    this.getSession().clear();
-                }
-
                 final Order order = new Order();
 
                 order.setProductList( products );
                 order.initializeProductList();
 
                 user.addNewOrder( order );
+
+                this.checkBatchLimit( ++operationsCounter );
 
                 this.getSession().persist( order );
 
@@ -401,13 +415,63 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
                         ProductDescription.class
                 ).setParameter( "order", "price DESC, createdDate ASC" )
                         .setParameter( "limit", 30 )
-                        .list(),
+                        .setCacheable( true )
+                        .setCacheMode( CacheMode.GET )
+                        .setCacheRegion(
+                                super.generateCacheName( PostgreSqlTables.ORDERS )
+                        ).list(),
 
                 productDescription -> super.logging(
                         productDescription.getId()
                         + " : "
                         + productDescription.getProductPriceSize()
                 )
+        );
+    }
+
+    public void getWithNaturalId () {
+        final Student student = this.getSession()
+                .byNaturalId( Student.class )
+                .using( "email", "sarvar@gmail.com" )
+                .load();
+
+        this.getSession().find(
+                Student.class, 1L
+        );
+
+        this.getSession().get( Student.class, 1L );
+    }
+
+    /*
+    If you enable the hibernate.generate_statistics configuration property,
+    Hibernate will expose a number of metrics via SessionFactory.getStatistics().
+    Hibernate can even be configured to expose these statistics via JMX.
+
+    This way, you can get access to the Statistics class which comprises all sort of second-level cache metrics.
+     */
+    public void readCacheStatistics () {
+        final Statistics statistics = this.getSession().getSessionFactory().getStatistics();
+
+        final CacheRegionStatistics regionStatistics = statistics.getDomainDataRegionStatistics(
+                super.generateCacheName(
+                        PostgreSqlTables.ORDERS
+                )
+        );
+
+        super.logging(
+                regionStatistics.getRegionName()
+        );
+
+        super.logging(
+                regionStatistics.getHitCount()
+        );
+
+        super.logging(
+                regionStatistics.getMissCount()
+        );
+
+        super.logging(
+                regionStatistics.getSizeInMemory()
         );
     }
 

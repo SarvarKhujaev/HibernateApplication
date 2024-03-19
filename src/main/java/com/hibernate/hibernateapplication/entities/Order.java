@@ -7,7 +7,11 @@ import com.hibernate.hibernateapplication.inspectors.TimeInspector;
 import com.hibernate.hibernateapplication.constans.ErrorMessages;
 import com.hibernate.hibernateapplication.constans.OrderStatus;
 
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.CacheModeType;
+
+import org.hibernate.annotations.PartitionKey;
+import org.hibernate.annotations.Immutable;
 
 import jakarta.validation.constraints.*;
 import jakarta.persistence.*;
@@ -57,6 +61,11 @@ import java.util.List;
                 )
         }
 )
+@Cacheable
+@org.hibernate.annotations.Cache(
+        usage = CacheConcurrencyStrategy.READ_WRITE
+)
+@Immutable
 public class Order extends TimeInspector {
     public Long getId() {
         return this.id;
@@ -146,11 +155,13 @@ public class Order extends TimeInspector {
     private Long id;
 
     @NotNull( message = ErrorMessages.NULL_VALUE )
-    @Column( nullable = false, columnDefinition = "TIMESTAMP DEFAULT now()", name = "created_date" )
+    @Column( nullable = false, columnDefinition = "TIMESTAMP DEFAULT now()", name = "created_date", updatable = false )
+    @PartitionKey
     private final Date createdDate = super.newDate(); // дата создания аккаунта
 
     @NotNull( message = ErrorMessages.NULL_VALUE )
-    @ManyToOne( fetch = FetchType.LAZY )
+    @ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.ALL )
+    @PartitionKey
     private User user;
 
     @NotNull( message = ErrorMessages.NULL_VALUE )
@@ -164,6 +175,15 @@ public class Order extends TimeInspector {
             name = "order_id"
     )
     @OrderBy( value = "productName DESC, price DESC" )
+    /*
+    Hibernate can also cache collections, and the @Cache annotation must be on added to the collection property.
+
+    If the collection is made of value types (basic or embeddables mapped with @ElementCollection),
+    the collection is stored as such.
+    If the collection contains other entities (@OneToMany or @ManyToMany),
+    the collection cache entry will store the entity identifiers only.
+    */
+    @org.hibernate.annotations.Cache( usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE )
     private List< Product > productList = super.newList();
 
     public Order () {}

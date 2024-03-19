@@ -7,7 +7,9 @@ import com.hibernate.hibernateapplication.inspectors.TimeInspector;
 import com.hibernate.hibernateapplication.constans.ErrorMessages;
 import com.hibernate.hibernateapplication.constans.Categories;
 
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.CacheModeType;
+import org.hibernate.annotations.Immutable;
 
 import jakarta.validation.constraints.*;
 import jakarta.persistence.*;
@@ -16,7 +18,6 @@ import java.util.Date;
 
 @Entity( name = PostgreSqlTables.PRODUCTS )
 @Table( name = PostgreSqlTables.PRODUCTS, schema = PostgreSqlSchema.ENTITIES )
-@Cacheable
 @SqlResultSetMappings(
         value = {
                 @SqlResultSetMapping(
@@ -70,6 +71,10 @@ import java.util.Date;
                         resultSetMapping = HibernateNativeNamedQueries.PRODUCTS_GET_PRODUCT_WITH_RIGHT_STATUS_DUE_TO_COUNT_SETTER
                 )
         }
+)
+@Cacheable // настраиваем Second Level Cache
+@org.hibernate.annotations.Cache(
+        usage = CacheConcurrencyStrategy.READ_ONLY
 )
 public class Product extends TimeInspector {
     public void setId ( final Long id ) {
@@ -166,6 +171,7 @@ public class Product extends TimeInspector {
     private Long id;
 
     // дата создания товара
+    @Immutable
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @Column( nullable = false, columnDefinition = "TIMESTAMP DEFAULT now()", name = "created_date" )
     private final Date createdDate = super.newDate();
