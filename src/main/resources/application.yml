@@ -1,0 +1,9 @@
+server:
+    port: 8080
+    address: localhost
+
+variables:
+    HIBERNATE_VALUES:
+        URL: "jdbc:postgresql://localhost:5432/postgres"
+        USER: "postgres"
+        PASSWORD: "killerbee"

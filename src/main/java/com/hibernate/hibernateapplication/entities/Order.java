@@ -17,29 +17,49 @@ import java.util.List;
 
 @Entity( name = PostgreSqlTables.ORDERS )
 @Table( name = PostgreSqlTables.ORDERS, schema = PostgreSqlSchema.ENTITIES )
-@org.hibernate.annotations.NamedNativeQuery(
-        name = HibernateNativeNamedQueries.ORDERS_GET_ORDERS_GROUP_VALUES,
+@SqlResultSetMappings(
+        value = {
+                @SqlResultSetMapping(
+                        name = HibernateNativeNamedQueries.ORDERS_GET_ORDERS_GROUP_VALUES_SETTER,
+                        classes = {
+                                @ConstructorResult(
+                                        targetClass = OrderStatusCount.class,
+                                        columns = {
+                                                @ColumnResult(
+                                                        name = "orderStatus"
+                                                ),
+                                                @ColumnResult(
+                                                        name = "totalCount"
+                                                )
+                                        }
+                                )
+                        }
+                )
+        }
+)
+@org.hibernate.annotations.NamedNativeQueries(
+        value = {
+                @org.hibernate.annotations.NamedNativeQuery(
+                        name = HibernateNativeNamedQueries.ORDERS_GET_ORDERS_GROUP_VALUES,
 
-        query = """
-                SELECT status AS orderStatus, COUNT() AS totalCount
-                FROM entities.orders
-                WHERE created_date < now()
-                GROUP BY ( orderStatus )
-                """,
+                        query = """
+                            SELECT status AS orderStatus, COUNT() AS totalCount
+                            FROM entities.orders
+                            WHERE created_date < now()
+                            GROUP BY ( orderStatus )
+                            """,
 
-        timeout = 1,
-        readOnly = true,
-        cacheable = true,
-        cacheMode = CacheModeType.GET,
-        resultClass = OrderStatusCount.class
+                        timeout = 1,
+                        readOnly = true,
+                        cacheable = true,
+                        cacheMode = CacheModeType.GET,
+                        resultSetMapping = HibernateNativeNamedQueries.ORDERS_GET_ORDERS_GROUP_VALUES_SETTER
+                )
+        }
 )
 public class Order extends TimeInspector {
     public Long getId() {
         return this.id;
-    }
-
-    public List< Product > getProductList() {
-        return this.productList;
     }
 
     public User getUser() {
@@ -54,8 +74,36 @@ public class Order extends TimeInspector {
         return this.totalOrderSum;
     }
 
+    public OrderStatus getOrderStatus() {
+        return this.orderStatus;
+    }
+
+    public List< Product > getProductList() {
+        return this.productList;
+    }
+
+    public int getTotalCountOfProductsInOrder() {
+        return this.totalCountOfProductsInOrder;
+    }
+
     public void setUser( final User user ) {
         this.user = user;
+    }
+
+    public void setProductList ( final List< Product > productList ) {
+        this.productList = productList.stream().filter( product -> product.getTotalCount() > 0 ).toList();
+    }
+
+    public void setOrderStatus ( final OrderStatus orderStatus ) {
+        this.orderStatus = orderStatus;
+    }
+
+    public void setTotalOrderSum ( final long totalOrderSum ) {
+        this.totalOrderSum = totalOrderSum;
+    }
+
+    public void setTotalCountOfProductsInOrder ( final int totalCountOfProductsInOrder ) {
+        this.totalCountOfProductsInOrder = totalCountOfProductsInOrder;
     }
 
     public void initializeProductList () {
@@ -73,34 +121,6 @@ public class Order extends TimeInspector {
                     product.setProductWasSoldCount( product.getProductWasSoldCount() + 1 );
                 }
         );
-    }
-
-    public void setProductList ( final List< Product > productList ) {
-        this.productList = productList.stream().filter( product -> product.getTotalCount() > 0 ).toList();
-    }
-
-    public void setTotalOrderSum ( final long totalOrderSum ) {
-        this.totalOrderSum = totalOrderSum;
-    }
-
-    public int getTotalCountOfProductsInOrder() {
-        return this.totalCountOfProductsInOrder;
-    }
-
-    public void setTotalCountOfProductsInOrder ( final int totalCountOfProductsInOrder ) {
-        this.totalCountOfProductsInOrder = totalCountOfProductsInOrder;
-    }
-
-    public OrderStatus getOrderStatus() {
-        return this.orderStatus;
-    }
-
-    public void setOrderStatus ( final OrderStatus orderStatus ) {
-        this.orderStatus = orderStatus;
-    }
-
-    public void setId ( final Long id ) {
-        this.id = id;
     }
 
     // общая стоимость заказа

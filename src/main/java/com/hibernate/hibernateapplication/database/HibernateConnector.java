@@ -3,7 +3,7 @@ package com.hibernate.hibernateapplication.database;
 import com.hibernate.hibernateapplication.constans.hibernate.HibernateNativeNamedQueries;
 import com.hibernate.hibernateapplication.interfaces.ServiceCommonMethods;
 import com.hibernate.hibernateapplication.constans.OrderStatus;
-import com.hibernate.hibernateapplication.inspectors.Archieve;
+import com.hibernate.hibernateapplication.inspectors.Archive;
 import com.hibernate.hibernateapplication.entities.*;
 
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -26,7 +26,7 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.Set;
 
-public final class HibernateConnector extends Archieve implements ServiceCommonMethods {
+public final class HibernateConnector extends Archive implements ServiceCommonMethods {
     public Session getSession() {
         return this.session;
     }
@@ -94,6 +94,11 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
         this.getSessionFactory().getCache().evictEntityData( User.class );
         this.getSessionFactory().getCache().evictEntityData( Order.class );
         this.getSessionFactory().getCache().evictEntityData( Product.class );
+
+        /*
+        Hibernate specific JDBC batch size configuration on a per-Session basis
+         */
+        this.getSession().setJdbcBatchSize( 30 );
 
         super.logging( this.getClass() );
     }
@@ -333,8 +338,28 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
 
         final Transaction transaction = this.newTransaction();
 
+        transaction.begin();
+
+        int operationsCounter = 0;
+
         for ( final User user : users ) {
-            for ( int j = 0; j < 10; j++ ) {
+            for ( int j = 0; j < 5; j++ ) {
+                /*
+                проверяем что количество операций не превысило
+                макс количество Batch
+                 */
+                if ( operationsCounter++ > 0 && ( operationsCounter & super.BATCH_SIZE ) == 0 ) {
+                    /*
+                    если да, то освобождаем пространство в кеше
+                    на уровне first-level cache
+
+                    When you make new objects persistent, employ methods flush() and clear() to the session regularly,
+                    to control the size of the first-level cache.
+                     */
+                    this.getSession().flush();
+                    this.getSession().clear();
+                }
+
                 final Order order = new Order();
 
                 order.setProductList( products );
