@@ -11,6 +11,10 @@ public class HibernateApplication {
 
     public static void main( final String[] args ) {
         context = SpringApplication.run( HibernateApplication.class, args );
+//        HibernateConnector.getInstance().insertUsers();
+//        HibernateConnector.getInstance().insertProducts();
+//        HibernateConnector.getInstance().insertOrders();
+//        HibernateConnector.getInstance().getUserOrders();
         HibernateConnector.getInstance().checkNewNativeQuery();
         HibernateConnector.getInstance().close();
     }

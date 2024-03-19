@@ -1,15 +1,11 @@
 package com.hibernate.hibernateapplication.entities;
 
 import com.hibernate.hibernateapplication.constans.hibernate.HibernateNativeNamedQueries;
-import com.hibernate.hibernateapplication.constans.PostgreSqlSchema;
-import com.hibernate.hibernateapplication.constans.PostgreSqlTables;
 import com.hibernate.hibernateapplication.inspectors.TimeInspector;
-import com.hibernate.hibernateapplication.constans.ErrorMessages;
-import com.hibernate.hibernateapplication.constans.OrderStatus;
+import com.hibernate.hibernateapplication.constans.*;
 
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.CacheModeType;
-
 import org.hibernate.annotations.PartitionKey;
 import org.hibernate.annotations.Immutable;
 
@@ -118,15 +114,11 @@ public class Order extends TimeInspector {
     public void initializeProductList () {
         this.setTotalCountOfProductsInOrder( this.getProductList().size() );
 
-        this.getProductList()
-                .stream()
-                .map( Product::getPrice )
-                .forEach( value -> this.setTotalOrderSum( this.getTotalOrderSum() + value ) );
-
         super.analyze(
                 this.getProductList(),
                 product -> {
                     product.setTotalCount( product.getTotalCount() - 1 );
+                    this.setTotalOrderSum( this.getTotalOrderSum() + product.getPrice() );
                     product.setProductWasSoldCount( product.getProductWasSoldCount() + 1 );
                 }
         );
@@ -155,7 +147,12 @@ public class Order extends TimeInspector {
     private Long id;
 
     @NotNull( message = ErrorMessages.NULL_VALUE )
-    @Column( nullable = false, columnDefinition = "TIMESTAMP DEFAULT now()", name = "created_date", updatable = false )
+    @Column(
+            name = "created_date",
+            nullable = false,
+            updatable = false,
+            columnDefinition = PostgreSqlFunctions.NOW
+    )
     @PartitionKey
     private final Date createdDate = super.newDate(); // дата создания аккаунта
 
@@ -164,17 +161,26 @@ public class Order extends TimeInspector {
     @PartitionKey
     private User user;
 
-    @NotNull( message = ErrorMessages.NULL_VALUE )
-    @OneToMany(
-            orphanRemoval = true,
+    @ManyToMany(
             targetEntity = Product.class,
-            cascade = CascadeType.REFRESH,
+            cascade = CascadeType.ALL,
             fetch = FetchType.LAZY
     )
-    @JoinColumn(
-            name = "order_id"
+    @OrderBy( value = "totalCount DESC, createdDate DESC" )
+    @JoinTable(
+            name = "Orders_Products",
+            schema = PostgreSqlSchema.ENTITIES,
+            joinColumns = {
+                    @JoinColumn(
+                            name = "order_id"
+                    )
+            },
+            inverseJoinColumns = {
+                    @JoinColumn(
+                            name = "product_id"
+                    )
+            }
     )
-    @OrderBy( value = "productName DESC, price DESC" )
     /*
     Hibernate can also cache collections, and the @Cache annotation must be on added to the collection property.
 
@@ -183,7 +189,9 @@ public class Order extends TimeInspector {
     If the collection contains other entities (@OneToMany or @ManyToMany),
     the collection cache entry will store the entity identifiers only.
     */
-    @org.hibernate.annotations.Cache( usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE )
+    @org.hibernate.annotations.Cache(
+            usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE
+    )
     private List< Product > productList = super.newList();
 
     public Order () {}

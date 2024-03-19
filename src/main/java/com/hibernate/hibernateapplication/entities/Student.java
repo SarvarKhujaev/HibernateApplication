@@ -1,5 +1,6 @@
 package com.hibernate.hibernateapplication.entities;
 
+import com.hibernate.hibernateapplication.constans.PostgreSqlFunctions;
 import com.hibernate.hibernateapplication.constans.PostgreSqlSchema;
 import com.hibernate.hibernateapplication.constans.PostgreSqlTables;
 import com.hibernate.hibernateapplication.inspectors.TimeInspector;
@@ -49,10 +50,10 @@ public class Student extends TimeInspector {
     @PartitionKey
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @Column(
+            name = "created_date",
             nullable = false,
             updatable = false,
-            columnDefinition = "TIMESTAMP DEFAULT now()",
-            name = "created_date"
+            columnDefinition = PostgreSqlFunctions.NOW
     )
     private final Date createdDate = super.newDate(); // дата создания аккаунта
 

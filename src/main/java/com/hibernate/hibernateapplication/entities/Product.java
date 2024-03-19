@@ -1,19 +1,16 @@
 package com.hibernate.hibernateapplication.entities;
 
 import com.hibernate.hibernateapplication.constans.hibernate.HibernateNativeNamedQueries;
-import com.hibernate.hibernateapplication.constans.PostgreSqlSchema;
-import com.hibernate.hibernateapplication.constans.PostgreSqlTables;
 import com.hibernate.hibernateapplication.inspectors.TimeInspector;
-import com.hibernate.hibernateapplication.constans.ErrorMessages;
-import com.hibernate.hibernateapplication.constans.Categories;
+import com.hibernate.hibernateapplication.constans.*;
 
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.CacheModeType;
+import org.hibernate.annotations.PartitionKey;
 import org.hibernate.annotations.Immutable;
 
 import jakarta.validation.constraints.*;
 import jakarta.persistence.*;
-import org.hibernate.annotations.PartitionKey;
 
 import java.util.Date;
 
@@ -178,7 +175,7 @@ public class Product extends TimeInspector {
             name = "created_date",
             nullable = false,
             updatable = false,
-            columnDefinition = "TIMESTAMP DEFAULT now()"
+            columnDefinition = PostgreSqlFunctions.NOW
     )
     @PartitionKey
     private final Date createdDate = super.newDate();

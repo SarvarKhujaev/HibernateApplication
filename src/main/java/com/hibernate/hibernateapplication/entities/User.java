@@ -1,5 +1,6 @@
 package com.hibernate.hibernateapplication.entities;
 
+import com.hibernate.hibernateapplication.constans.PostgreSqlFunctions;
 import com.hibernate.hibernateapplication.constans.PostgreSqlSchema;
 import com.hibernate.hibernateapplication.constans.PostgreSqlTables;
 import com.hibernate.hibernateapplication.inspectors.TimeInspector;
@@ -112,7 +113,7 @@ public class User extends TimeInspector {
             name = "created_date",
             nullable = false,
             updatable = false,
-            columnDefinition = "TIMESTAMP DEFAULT now()"
+            columnDefinition = PostgreSqlFunctions.NOW
     )
     private final Date createdDate = super.newDate(); // дата создания аккаунта
 
@@ -123,8 +124,10 @@ public class User extends TimeInspector {
             fetch = FetchType.LAZY
     )
     @OrderBy( value = "totalOrderSum DESC, totalCountOfProductsInOrder DESC" )
-    @Immutable
-    @JoinColumn( name = "user_id" )
+    @JoinColumn(
+            name = "user_id",
+            table = PostgreSqlTables.ORDERS
+    )
     /*
     Hibernate can also cache collections, and the @Cache annotation must be on added to the collection property.
 
@@ -133,7 +136,9 @@ public class User extends TimeInspector {
     If the collection contains other entities (@OneToMany or @ManyToMany),
     the collection cache entry will store the entity identifiers only.
     */
-    @org.hibernate.annotations.Cache( usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE )
+    @org.hibernate.annotations.Cache(
+            usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE
+    )
     private List< Order > orders = super.newList();
 
     public User () {}

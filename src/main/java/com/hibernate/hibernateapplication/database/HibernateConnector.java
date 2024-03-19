@@ -12,7 +12,6 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.MetadataSources;
 
 import org.hibernate.stat.CacheRegionStatistics;
-import org.hibernate.stat.Statistics;
 
 import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
@@ -138,8 +137,6 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
         if ( !super.isCollectionNotEmpty( violations ) ) {
             final Transaction transaction = this.newTransaction();
 
-            transaction.begin();
-
             this.getSession().save( object );
 
             transaction.commit();
@@ -160,8 +157,6 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
         if ( !super.isCollectionNotEmpty( violations ) ) {
             final Transaction transaction = this.newTransaction();
-
-            transaction.begin();
 
             this.getSession().persist( user );
 
@@ -190,8 +185,6 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
         final Transaction transaction = this.newTransaction();
 
-        transaction.begin();
-
         this.getSession().persist( order );
 
         transaction.commit();
@@ -206,8 +199,6 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
         final Transaction transaction = this.newTransaction();
 
-        transaction.begin();
-
         this.getSession().persist( user );
 
         transaction.commit();
@@ -218,8 +209,6 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
         final Transaction transaction = this.newTransaction();
 
-        transaction.begin();
-
         this.getSession().delete( user );
 
         transaction.commit();
@@ -229,8 +218,6 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
     public void test () {
         final Transaction transaction = this.newTransaction();
-
-        transaction.begin();
 
         final ScrollableResults< Product > scrollableResults = this.getSession().createQuery(
                         """
@@ -359,26 +346,51 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
         super.analyze(
                 nativeQuery.list(),
-                order -> System.out.println( order.getUser().getName() )
+                order -> super.logging( order.getUser().getName() )
         );
+    }
+
+    public void insertUsers () {
+        for ( int i = 0; i < 10; i++ ) {
+            final User user = new User();
+
+            user.setName( "test" );
+            user.setEmail( "sarvar@gmail.com" + i );
+            user.setSurname( "test" );
+            user.setPhoneNumber( "+99897" + i );
+
+            this.save( user );
+        }
+    }
+
+    public void insertProducts () {
+        for ( int i = 0; i < 10; i++ ) {
+            final Product product = new Product();
+
+            product.setProductName( "test" );
+            product.setDescription( "test" );
+
+            product.setPrice( i * 10000 + 1 );
+            product.setTotalCount( i * 10000 + 1 );
+
+            this.save( product );
+        }
     }
 
     public void insertOrders () {
         final List< User > users = this.getSession().createQuery(
                 """
-                FROM users WHERE id IN ( 1, 2, 3, 4 )
+                FROM USERS WHERE id IN ( 1, 2, 3, 4 )
                 """
         ).getResultList();
 
         final List< Product > products = this.getSession().createQuery(
                 """
-                FROM products WHERE id IN ( 1, 2, 3, 4, 5, 6 )
+                FROM PRODUCTS WHERE id IN ( 2, 3, 4, 5, 6, 7 )
                 """
         ).getResultList();
 
         final Transaction transaction = this.newTransaction();
-
-        transaction.begin();
 
         int operationsCounter = 0;
 
@@ -391,7 +403,7 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
                 user.addNewOrder( order );
 
-                this.checkBatchLimit( ++operationsCounter );
+                this.checkBatchLimit( +operationsCounter );
 
                 this.getSession().persist( order );
 
@@ -414,7 +426,7 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
         super.analyze(
                 user.getOrders(),
-                order -> super.logging( order.getId().toString() )
+                order -> super.logging( order.getId() + " : " + order.getProductList().size() )
         );
 
         transaction.commit();
@@ -462,13 +474,14 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
     This way, you can get access to the Statistics class which comprises all sort of second-level cache metrics.
      */
     public void readCacheStatistics () {
-        final Statistics statistics = this.getSession().getSessionFactory().getStatistics();
-
-        final CacheRegionStatistics regionStatistics = statistics.getDomainDataRegionStatistics(
-                super.generateCacheName(
-                        PostgreSqlTables.ORDERS
-                )
-        );
+        final CacheRegionStatistics regionStatistics = this.getSession()
+                .getSessionFactory()
+                .getStatistics()
+                .getDomainDataRegionStatistics(
+                        super.generateCacheName(
+                                PostgreSqlTables.ORDERS
+                        )
+                );
 
         super.logging(
                 regionStatistics.getRegionName()
