@@ -1,5 +1,7 @@
 package com.hibernate.hibernateapplication.entities;
 
+import com.hibernate.hibernateapplication.constans.PostgreSqlSchema;
+import com.hibernate.hibernateapplication.constans.PostgreSqlTables;
 import com.hibernate.hibernateapplication.inspectors.TimeInspector;
 import com.hibernate.hibernateapplication.constans.ErrorMessages;
 
@@ -9,8 +11,8 @@ import jakarta.persistence.*;
 import java.util.Date;
 import java.util.List;
 
-@Entity( name = "users" )
-@Table( name = "users", schema = "entities" )
+@Entity( name = PostgreSqlTables.USERS )
+@Table( name = PostgreSqlTables.USERS, schema = PostgreSqlSchema.ENTITIES )
 @Cacheable // настраиваем First Level Cache
 public class User extends TimeInspector {
     public List< Order > getOrders() {

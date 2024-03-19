@@ -24,7 +24,6 @@
         <mapping class="com.hibernate.hibernateapplication.entities.User"/>
         <mapping class="com.hibernate.hibernateapplication.entities.Product"/>
         <mapping class="com.hibernate.hibernateapplication.entities.Order"/>
-        <mapping class="com.hibernate.hibernateapplication.entities.Student"/>
 
     </session-factory>
 </hibernate-configuration>

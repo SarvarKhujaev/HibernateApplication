@@ -1,6 +1,8 @@
 package com.hibernate.hibernateapplication.entities;
 
 import com.hibernate.hibernateapplication.constans.hibernate.HibernateNativeNamedQueries;
+import com.hibernate.hibernateapplication.constans.PostgreSqlSchema;
+import com.hibernate.hibernateapplication.constans.PostgreSqlTables;
 import com.hibernate.hibernateapplication.inspectors.TimeInspector;
 import com.hibernate.hibernateapplication.constans.ErrorMessages;
 import com.hibernate.hibernateapplication.constans.Categories;
@@ -12,8 +14,8 @@ import jakarta.persistence.*;
 
 import java.util.Date;
 
-@Entity( name = "products" )
-@Table( name = "products", schema = "entities" )
+@Entity( name = PostgreSqlTables.PRODUCTS )
+@Table( name = PostgreSqlTables.PRODUCTS, schema = PostgreSqlSchema.ENTITIES )
 @Cacheable
 @SqlResultSetMappings(
         value = {
@@ -70,6 +72,34 @@ import java.util.Date;
         }
 )
 public class Product extends TimeInspector {
+    public void setId ( final Long id ) {
+        this.id = id;
+    }
+
+    public void setPrice ( final long price ) {
+        this.price = price;
+    }
+
+    public void setCategory ( final Categories category ) {
+        this.category = category;
+    }
+
+    public void setTotalCount ( final long totalCount ) {
+        this.totalCount = totalCount;
+    }
+
+    public void setDescription ( final String description ) {
+        this.description = description;
+    }
+
+    public void setProductName ( final String productName ) {
+        this.productName = productName;
+    }
+
+    public void setProductWasSoldCount ( final long productWasSoldCount ) {
+        this.productWasSoldCount = productWasSoldCount;
+    }
+
     public long getId() {
         return this.id;
     }
@@ -78,56 +108,28 @@ public class Product extends TimeInspector {
         return this.price;
     }
 
-    public void setPrice ( final long price ) {
-        this.price = price;
-    }
-
     public long getTotalCount() {
         return this.totalCount;
-    }
-
-    public void setTotalCount ( final long totalCount ) {
-        this.totalCount = totalCount;
-    }
-
-    public long getProductWasSoldCount() {
-        return this.productWasSoldCount;
-    }
-
-    public void setProductWasSoldCount ( final long productWasSoldCount ) {
-        this.productWasSoldCount = productWasSoldCount;
-    }
-
-    public String getDescription() {
-        return this.description;
-    }
-
-    public void setDescription ( final String description ) {
-        this.description = description;
-    }
-
-    public String getProductName() {
-        return this.productName;
-    }
-
-    public void setProductName ( final String productName ) {
-        this.productName = productName;
-    }
-
-    public void setId ( final Long id ) {
-        this.id = id;
     }
 
     public Date getCreatedDate() {
         return this.createdDate;
     }
 
+    public String getDescription() {
+        return this.description;
+    }
+
+    public String getProductName() {
+        return this.productName;
+    }
+
     public Categories getCategory() {
         return this.category;
     }
 
-    public void setCategory ( final Categories category ) {
-        this.category = category;
+    public long getProductWasSoldCount() {
+        return this.productWasSoldCount;
     }
 
     @NotNull( message = ErrorMessages.NULL_VALUE )

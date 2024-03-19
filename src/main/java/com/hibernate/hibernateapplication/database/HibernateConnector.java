@@ -73,7 +73,6 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
                 .addAnnotatedClass( User.class )
                 .addAnnotatedClass( Order.class )
                 .addAnnotatedClass( Product.class )
-                .addAnnotatedClass( Student.class )
                 .getMetadataBuilder()
                 .build()
                 .getSessionFactoryBuilder()
@@ -95,7 +94,6 @@ public final class HibernateConnector extends Archieve implements ServiceCommonM
         this.getSessionFactory().getCache().evictEntityData( User.class );
         this.getSessionFactory().getCache().evictEntityData( Order.class );
         this.getSessionFactory().getCache().evictEntityData( Product.class );
-        this.getSessionFactory().getCache().evictEntityData( Student.class );
 
         super.logging( this.getClass() );
     }

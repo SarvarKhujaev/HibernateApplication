@@ -1,6 +1,8 @@
 package com.hibernate.hibernateapplication.entities;
 
 import com.hibernate.hibernateapplication.constans.hibernate.HibernateNativeNamedQueries;
+import com.hibernate.hibernateapplication.constans.PostgreSqlSchema;
+import com.hibernate.hibernateapplication.constans.PostgreSqlTables;
 import com.hibernate.hibernateapplication.inspectors.TimeInspector;
 import com.hibernate.hibernateapplication.constans.ErrorMessages;
 import com.hibernate.hibernateapplication.constans.OrderStatus;
@@ -13,8 +15,8 @@ import jakarta.persistence.*;
 import java.util.Date;
 import java.util.List;
 
-@Entity( name = "orders" )
-@Table( name = "orders", schema = "entities" )
+@Entity( name = PostgreSqlTables.ORDERS )
+@Table( name = PostgreSqlTables.ORDERS, schema = PostgreSqlSchema.ENTITIES )
 @org.hibernate.annotations.NamedNativeQuery(
         name = HibernateNativeNamedQueries.ORDERS_GET_ORDERS_GROUP_VALUES,
 
@@ -145,12 +147,4 @@ public class Order extends TimeInspector {
     private List< Product > productList = super.newList();
 
     public Order () {}
-
-    public Order(
-            final Long id,
-            final OrderStatus orderStatus
-    ) {
-        this.orderStatus = orderStatus;
-        this.id = id;
-    }
 }
