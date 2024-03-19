@@ -108,7 +108,12 @@ public class User extends TimeInspector {
     @Immutable
     @PartitionKey
     @NotNull( message = ErrorMessages.NULL_VALUE )
-    @Column( nullable = false, columnDefinition = "TIMESTAMP DEFAULT now()", name = "created_date" )
+    @Column(
+            name = "created_date",
+            nullable = false,
+            updatable = false,
+            columnDefinition = "TIMESTAMP DEFAULT now()"
+    )
     private final Date createdDate = super.newDate(); // дата создания аккаунта
 
     @OneToMany(

@@ -13,6 +13,7 @@ import org.hibernate.annotations.Immutable;
 
 import jakarta.validation.constraints.*;
 import jakarta.persistence.*;
+import org.hibernate.annotations.PartitionKey;
 
 import java.util.Date;
 
@@ -173,7 +174,13 @@ public class Product extends TimeInspector {
     // дата создания товара
     @Immutable
     @NotNull( message = ErrorMessages.NULL_VALUE )
-    @Column( nullable = false, columnDefinition = "TIMESTAMP DEFAULT now()", name = "created_date" )
+    @Column(
+            name = "created_date",
+            nullable = false,
+            updatable = false,
+            columnDefinition = "TIMESTAMP DEFAULT now()"
+    )
+    @PartitionKey
     private final Date createdDate = super.newDate();
 
     // https://www.baeldung.com/jpa-default-column-values

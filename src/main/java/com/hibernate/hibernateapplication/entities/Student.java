@@ -51,7 +51,8 @@ public class Student extends TimeInspector {
     @Column(
             nullable = false,
             updatable = false,
-            columnDefinition = "TIMESTAMP DEFAULT now()", name = "created_date"
+            columnDefinition = "TIMESTAMP DEFAULT now()",
+            name = "created_date"
     )
     private final Date createdDate = super.newDate(); // дата создания аккаунта
 

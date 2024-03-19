@@ -113,17 +113,17 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
             final int operationsCounter
     ) {
         /*
-                проверяем что количество операций не превысило
-                макс количество Batch
-                 */
+        проверяем что количество операций не превысило
+        макс количество Batch
+         */
         if ( operationsCounter > 0 && ( operationsCounter & super.BATCH_SIZE ) == 0 ) {
-                    /*
-                    если да, то освобождаем пространство в кеше
-                    на уровне first-level cache
+            /*
+            если да, то освобождаем пространство в кеше
+            на уровне first-level cache
 
-                    When you make new objects persistent, employ methods flush() and clear() to the session regularly,
-                    to control the size of the first-level cache.
-                     */
+            When you make new objects persistent, employ methods flush() and clear() to the session regularly,
+            to control the size of the first-level cache.
+             */
             this.getSession().flush();
             this.getSession().clear();
         }
@@ -137,6 +137,8 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
         if ( !super.isCollectionNotEmpty( violations ) ) {
             final Transaction transaction = this.newTransaction();
+
+            transaction.begin();
 
             this.getSession().save( object );
 
@@ -158,6 +160,8 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
         if ( !super.isCollectionNotEmpty( violations ) ) {
             final Transaction transaction = this.newTransaction();
+
+            transaction.begin();
 
             this.getSession().persist( user );
 
@@ -186,6 +190,8 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
         final Transaction transaction = this.newTransaction();
 
+        transaction.begin();
+
         this.getSession().persist( order );
 
         transaction.commit();
@@ -200,6 +206,8 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
         final Transaction transaction = this.newTransaction();
 
+        transaction.begin();
+
         this.getSession().persist( user );
 
         transaction.commit();
@@ -210,6 +218,8 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
         final Transaction transaction = this.newTransaction();
 
+        transaction.begin();
+
         this.getSession().delete( user );
 
         transaction.commit();
@@ -219,6 +229,8 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
     public void test () {
         final Transaction transaction = this.newTransaction();
+
+        transaction.begin();
 
         final ScrollableResults< Product > scrollableResults = this.getSession().createQuery(
                         """
@@ -240,21 +252,21 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
     }
 
     public void get () {
-        final Query< Order > orders = this.getSession().createQuery(
+        final Query< Order > orderQuery = this.getSession().createQuery(
                 "FROM orders WHERE user.id = :user_id ORDER BY createdDate",
                 Order.class
         );
 
-        orders.setFirstResult( 5 );
-        orders.setMaxResults( 100 );
+        orderQuery.setFirstResult( 5 );
+        orderQuery.setMaxResults( 100 );
 
-        orders.setCacheMode( CacheMode.GET );
-        orders.setComment( "Select all orders for current user" );
+        orderQuery.setCacheMode( CacheMode.GET );
+        orderQuery.setComment( "Select all orders for current user" );
 
-        orders.setParameter( "user_id", 10 );
+        orderQuery.setParameter( "user_id", 10 );
 
         super.analyze(
-                orders.getResultList(),
+                orderQuery.getResultList(),
                 order -> super.logging( order.getId() )
         );
     }
