@@ -115,7 +115,7 @@ public class User extends TimeInspector {
             updatable = false,
             columnDefinition = PostgreSqlFunctions.NOW
     )
-    private final Date createdDate = super.newDate(); // дата создания аккаунта
+    private final Date createdDate = super.newDate(); // дата создания
 
     @OneToMany(
             orphanRemoval = true,
@@ -139,6 +139,7 @@ public class User extends TimeInspector {
     @org.hibernate.annotations.Cache(
             usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE
     )
+    @Immutable
     private List< Order > orders = super.newList();
 
     public User () {}

@@ -46,22 +46,7 @@ import java.util.Date;
         value = {
                 @org.hibernate.annotations.NamedNativeQuery(
                         name = HibernateNativeNamedQueries.PRODUCTS_GET_PRODUCT_WITH_RIGHT_STATUS_DUE_TO_COUNT,
-
-                        query = """
-                            SELECT id, price, created_date AS createdDate,
-
-                            CASE
-                            WHEN price > 1000 THEN 'expensive'
-                            WHEN price BETWEEN 500 AND 100 THEN 'cheap'
-                            WHEN price BETWEEN 1000 AND 500 THEN 'middle'
-                            ELSE 'normal'
-                            END productPriceSize
-
-                            FROM entities.products
-                            ORDER BY :order
-                            LIMIT :limit
-                            """,
-
+                        query = HibernateNativeNamedQueries.PRODUCTS_GET_PRODUCT_WITH_RIGHT_STATUS_DUE_TO_COUNT_QUERY,
                         timeout = 1,
                         readOnly = true,
                         cacheable = true,

@@ -2,7 +2,7 @@ package com.hibernate.hibernateapplication.entities;
 
 import com.hibernate.hibernateapplication.constans.OrderStatus;
 
-public class OrderStatusCount {
+public final class OrderStatusCount {
     public Long getTotalCount() {
         return this.totalCount;
     }

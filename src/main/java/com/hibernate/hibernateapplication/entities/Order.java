@@ -41,14 +41,7 @@ import java.util.List;
         value = {
                 @org.hibernate.annotations.NamedNativeQuery(
                         name = HibernateNativeNamedQueries.ORDERS_GET_ORDERS_GROUP_VALUES,
-
-                        query = """
-                            SELECT status AS orderStatus, COUNT() AS totalCount
-                            FROM entities.orders
-                            WHERE created_date < now()
-                            GROUP BY ( orderStatus )
-                            """,
-
+                        query = HibernateNativeNamedQueries.ORDERS_GET_ORDERS_GROUP_VALUES_QUERY,
                         timeout = 1,
                         readOnly = true,
                         cacheable = true,
@@ -156,6 +149,7 @@ public class Order extends TimeInspector {
     @PartitionKey
     private final Date createdDate = super.newDate(); // дата создания аккаунта
 
+    @Immutable
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.ALL )
     @PartitionKey
@@ -192,6 +186,7 @@ public class Order extends TimeInspector {
     @org.hibernate.annotations.Cache(
             usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE
     )
+    @Immutable
     private List< Product > productList = super.newList();
 
     public Order () {}

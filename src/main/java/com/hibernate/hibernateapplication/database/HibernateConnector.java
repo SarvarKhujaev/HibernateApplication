@@ -103,7 +103,7 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
         /*
         Hibernate specific JDBC batch size configuration on a per-Session basis
          */
-        this.getSession().setJdbcBatchSize( 30 );
+        this.getSession().setJdbcBatchSize( super.BATCH_SIZE );
 
         super.logging( this.getClass() );
     }
@@ -307,25 +307,22 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
             .addScalar("name", StandardBasicTypes.STRING)
             .list();
          */
-        final NativeQuery< Object[] > nativeQuery = this.getSession().createNativeQuery(
-                MessageFormat.format(
-                        """
-                        SELECT * FROM {0}.{1}
-                        WHERE id = {2};
-                        """,
-                        "entities",
-                        "orders",
-                        5
-                ),
-                Object[].class
-        );
-
-        nativeQuery.addScalar( "id", Long.class );
-        nativeQuery.addScalar( "total_order_sum", Long.class );
-
         super.analyze(
-                nativeQuery.getResultList(),
-                objects -> System.out.println( objects[0] + " : " + objects[1] )
+                this.getSession().createNativeQuery(
+                        MessageFormat.format(
+                                """
+                                SELECT * FROM {0}.{1}
+                                WHERE id = {2};
+                                """,
+                                "entities",
+                                "orders",
+                                5
+                        ),
+                        Object[].class
+                ).addScalar( "id", Long.class )
+                        .addScalar( "total_order_sum", Long.class )
+                        .getResultList(),
+                objects -> super.logging( objects[0] + " : " + objects[1] )
         );
     }
 
@@ -403,7 +400,7 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
                 user.addNewOrder( order );
 
-                this.checkBatchLimit( +operationsCounter );
+                this.checkBatchLimit( ++operationsCounter );
 
                 this.getSession().persist( order );
 
