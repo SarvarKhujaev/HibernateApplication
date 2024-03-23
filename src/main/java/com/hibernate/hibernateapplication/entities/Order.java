@@ -120,13 +120,21 @@ public class Order extends TimeInspector {
     // общая стоимость заказа
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @Positive( message = ErrorMessages.VALUE_MUST_BE_POSITIVE)
-    @Column( nullable = false, columnDefinition = "BIGINT", name = "total_order_sum" )
+    @Column(
+            name = "total_order_sum",
+            nullable = false,
+            columnDefinition = "BIGINT"
+    )
     private long totalOrderSum = 0;
 
     // общее количество товаров в заказе
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @Positive( message = ErrorMessages.VALUE_MUST_BE_POSITIVE )
-    @Column( nullable = false, columnDefinition = "SMALLINT", name = "total_count_of_products_in_order" )
+    @Column(
+            name = "total_count_of_products_in_order",
+            nullable = false,
+            columnDefinition = "SMALLINT"
+    )
     private int totalCountOfProductsInOrder = 0;
 
     // https://www.baeldung.com/jpa-default-column-values
@@ -150,9 +158,13 @@ public class Order extends TimeInspector {
     private final Date createdDate = super.newDate(); // дата создания аккаунта
 
     @Immutable
-    @NotNull( message = ErrorMessages.NULL_VALUE )
-    @ManyToOne( fetch = FetchType.LAZY, cascade = CascadeType.ALL )
     @PartitionKey
+    @NotNull( message = ErrorMessages.NULL_VALUE )
+    @ManyToOne(
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            targetEntity = User.class
+    )
     private User user;
 
     @ManyToMany(

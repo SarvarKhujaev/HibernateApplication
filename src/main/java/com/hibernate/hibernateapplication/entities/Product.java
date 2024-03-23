@@ -51,6 +51,7 @@ import java.util.Date;
                         readOnly = true,
                         cacheable = true,
                         cacheMode = CacheModeType.GET,
+                        resultClass = ProductDescription.class,
                         resultSetMapping = HibernateNativeNamedQueries.PRODUCTS_GET_PRODUCT_WITH_RIGHT_STATUS_DUE_TO_COUNT_SETTER
                 )
         }

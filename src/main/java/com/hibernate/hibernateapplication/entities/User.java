@@ -77,29 +77,54 @@ public class User extends TimeInspector {
         return this.createdDate;
     }
 
-    @Size( min = 3, max = 50, message = ErrorMessages.VALUE_OUT_OF_RANGE )
+    @Size(
+            min = 3,
+            max = 50,
+            message = ErrorMessages.VALUE_OUT_OF_RANGE
+    )
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @NotBlank( message = ErrorMessages.NULL_VALUE )
     @Column( nullable = false, length = 20 )
     private String name;
 
-    @Size( min = 3, max = 30, message = ErrorMessages.VALUE_OUT_OF_RANGE )
+    @Size(
+            min = 3,
+            max = 30,
+            message = ErrorMessages.VALUE_OUT_OF_RANGE
+    )
     @Email( message = ErrorMessages.WRONG_EMAIL )
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @NotBlank( message = ErrorMessages.NULL_VALUE )
-    @Column( nullable = false, length = 30, unique = true )
+    @Column(
+            nullable = false,
+            unique = true,
+            length = 30
+    )
     private String email;
 
-    @Size( min = 3, max = 20, message = ErrorMessages.VALUE_OUT_OF_RANGE )
+    @Size(
+            min = 3,
+            max = 20,
+            message = ErrorMessages.VALUE_OUT_OF_RANGE
+    )
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @NotBlank( message = ErrorMessages.NULL_VALUE )
     @Column( nullable = false, length = 20 )
     private String surname;
 
-    @Size( min = 3, max = 20, message = ErrorMessages.VALUE_OUT_OF_RANGE )
+    @Size(
+            min = 3,
+            max = 20,
+            message = ErrorMessages.VALUE_OUT_OF_RANGE
+    )
     @NotNull( message = ErrorMessages.NULL_VALUE )
     @NotBlank( message = ErrorMessages.NULL_VALUE )
-    @Column( nullable = false, length = 20, name = "phone_number", unique = true )
+    @Column(
+            name = "phone_number",
+            length = 20,
+            unique = true,
+            nullable = false
+    )
     private String phoneNumber;
 
     @Id
@@ -123,11 +148,7 @@ public class User extends TimeInspector {
             cascade = CascadeType.ALL,
             fetch = FetchType.LAZY
     )
-    @OrderBy( value = "totalOrderSum DESC, totalCountOfProductsInOrder DESC" )
-    @JoinColumn(
-            name = "user_id",
-            table = PostgreSqlTables.ORDERS
-    )
+    @JoinColumn( name = "user_id" )
     /*
     Hibernate can also cache collections, and the @Cache annotation must be on added to the collection property.
 
@@ -139,7 +160,7 @@ public class User extends TimeInspector {
     @org.hibernate.annotations.Cache(
             usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE
     )
-    @Immutable
+    @OrderBy( value = "totalOrderSum DESC, totalCountOfProductsInOrder DESC" )
     private List< Order > orders = super.newList();
 
     public User () {}
