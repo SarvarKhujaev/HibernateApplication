@@ -116,6 +116,8 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
     @Override
     public void vacuumTable () {
+        final Transaction transaction = this.newTransaction();
+
         super.analyze(
                 super.getTablesList(),
                 table -> super.logging(
@@ -133,6 +135,10 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
                         ).executeUpdate()
                 )
         );
+
+        transaction.commit();
+
+        super.logging( transaction );
     }
 
     @Override
