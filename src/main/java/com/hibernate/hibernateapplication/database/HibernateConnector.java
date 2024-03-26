@@ -1,9 +1,9 @@
 package com.hibernate.hibernateapplication.database;
 
-import com.hibernate.hibernateapplication.constans.PostgresBufferMethods;
-import com.hibernate.hibernateapplication.constans.PostgresVacuumMethods;
 import com.hibernate.hibernateapplication.constans.hibernate.HibernateNativeNamedQueries;
 import com.hibernate.hibernateapplication.interfaces.ServiceCommonMethods;
+import com.hibernate.hibernateapplication.constans.PostgresBufferMethods;
+import com.hibernate.hibernateapplication.constans.PostgresVacuumMethods;
 import com.hibernate.hibernateapplication.constans.PostgreSqlTables;
 import com.hibernate.hibernateapplication.constans.OrderStatus;
 import com.hibernate.hibernateapplication.inspectors.Archive;
