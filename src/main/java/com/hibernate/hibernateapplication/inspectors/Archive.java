@@ -1,6 +1,6 @@
 package com.hibernate.hibernateapplication.inspectors;
 
-import com.hibernate.hibernateapplication.constans.PostgreSqlTables;
+import com.hibernate.hibernateapplication.constans.PostgreSqlSchema;
 import com.hibernate.hibernateapplication.HibernateApplication;
 import org.hibernate.cfg.Environment;
 import java.util.Map;
@@ -17,8 +17,22 @@ CacheMode.GET -> CacheStoreMode.BYPASS and CacheRetrieveMode.USE -> Read from th
 CacheMode.IGNORE -> CacheStoreMode.BYPASS and CacheRetrieveMode.BYPASS -> Doesn’t read/write data from/into the cache
 */
 public class Archive extends LogInspector {
+    protected int operationsCount = 0;
     protected final int BATCH_SIZE = 30;
     protected final Map< String, Object > dbSettings;
+
+    protected void increaseOperationsCount () {
+        this.operationsCount++;
+    }
+
+    protected boolean isBatchLimitNotOvercrowded () {
+        this.increaseOperationsCount();
+        /*
+        проверяем что количество операций не превысило
+        макс количество Batch
+        */
+        return this.operationsCount > 0 && this.operationsCount % this.BATCH_SIZE == 0;
+    }
 
     protected Archive() {
         /*
@@ -101,7 +115,7 @@ public class Archive extends LogInspector {
         this.dbSettings.put(
                 Environment.USE_SECOND_LEVEL_CACHE,
                 super.generateCacheName(
-                        PostgreSqlTables.ORDERS
+                        PostgreSqlSchema.ENTITIES
                 )
         );
 

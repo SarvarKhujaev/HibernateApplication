@@ -1,7 +1,20 @@
 package com.hibernate.hibernateapplication.interfaces;
 
+import com.hibernate.hibernateapplication.constans.PostgreSqlTables;
+
 public interface ServiceCommonMethods {
-    default void close( final Throwable throwable ) {}
+    /*
+    переносим все накопленные данные
+    в Буферный кэш
+    */
+    default void insertTableContentToBuffer () {}
+
+    /*
+    очищаем таблицу от старых и не используемых записей
+    */
+    default void vacuumTable () {}
+
+    default void prewarmTable () {};
 
     void close();
 }

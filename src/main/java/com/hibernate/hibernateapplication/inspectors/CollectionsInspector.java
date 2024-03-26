@@ -1,5 +1,7 @@
 package com.hibernate.hibernateapplication.inspectors;
 
+import com.hibernate.hibernateapplication.constans.PostgreSqlTables;
+
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.*;
@@ -21,6 +23,14 @@ public class CollectionsInspector extends DataValidateInspector {
 
     protected <T, V> Map<T, V> newMap () {
         return new HashMap<>();
+    }
+
+    protected List< String > getTablesList () {
+        return List.of(
+                PostgreSqlTables.USERS,
+                PostgreSqlTables.ORDERS,
+                PostgreSqlTables.PRODUCTS
+        );
     }
 
     public <T> void analyze (

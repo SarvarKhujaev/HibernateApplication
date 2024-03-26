@@ -1,5 +1,7 @@
 package com.hibernate.hibernateapplication.database;
 
+import com.hibernate.hibernateapplication.constans.PostgresBufferMethods;
+import com.hibernate.hibernateapplication.constans.PostgresVacuumMethods;
 import com.hibernate.hibernateapplication.constans.hibernate.HibernateNativeNamedQueries;
 import com.hibernate.hibernateapplication.interfaces.ServiceCommonMethods;
 import com.hibernate.hibernateapplication.constans.PostgreSqlTables;
@@ -105,17 +107,67 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
          */
         this.getSession().setJdbcBatchSize( super.BATCH_SIZE );
 
+        this.prewarmTable();
+
+        this.insertTableContentToBuffer();
+
         super.logging( this.getClass() );
     }
 
-    private void checkBatchLimit (
-            final int operationsCounter
-    ) {
+    @Override
+    public void vacuumTable () {
+        super.analyze(
+                super.getTablesList(),
+                table -> super.logging(
+                        table
+                                + " was cleaned: "
+                                + this.getSession().createNativeQuery(
+                                MessageFormat.format(
+                                        """
+                                        VACUUM( {0}, {1} ) {2};
+                                        """,
+                                        PostgresVacuumMethods.ANALYZE,
+                                        PostgresVacuumMethods.VERBOSE,
+                                        table
+                                )
+                        ).executeUpdate()
+                )
+        );
+    }
+
+    @Override
+    public void prewarmTable () {
         /*
-        проверяем что количество операций не превысило
-        макс количество Batch
-         */
-        if ( operationsCounter > 0 && ( operationsCounter & super.BATCH_SIZE ) == 0 ) {
+        загружаем список таблиц
+        */
+        this.getSession().createNativeQuery(
+                PostgresBufferMethods.PREWARM_TABLE
+        ).executeUpdate();
+    }
+
+    @Override
+    public void insertTableContentToBuffer () {
+        final Transaction transaction = this.newTransaction();
+
+        super.analyze(
+                super.getTablesList(),
+                table -> super.logging(
+                        table
+                                + " was inserted into buffer: "
+                                + this.getSession().createNativeQuery(
+                                PostgresBufferMethods.INSERT_TABLE_CONTENT_INTO_BUFFER.formatted(
+                                        table
+                                )
+                        ).executeUpdate()
+                )
+        );
+
+        transaction.commit();
+        super.logging( transaction );
+    }
+
+    private void checkBatchLimit () {
+        if ( super.isBatchLimitNotOvercrowded() ) {
             /*
             если да, то освобождаем пространство в кеше
             на уровне first-level cache
@@ -125,6 +177,26 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
              */
             this.getSession().flush();
             this.getSession().clear();
+        }
+    }
+
+    public void save ( final User user ) {
+        final Set< ConstraintViolation< User > > violations = super.checkEntityValidation(
+                this.getValidatorFactory().getValidator(),
+                user
+        );
+
+        if ( !super.isCollectionNotEmpty( violations ) ) {
+            final Transaction transaction = this.newTransaction();
+
+            this.getSession().persist( user );
+
+            transaction.commit();
+        } else {
+            super.analyze(
+                    violations,
+                    userConstraintViolation -> super.logging( userConstraintViolation.getMessage() )
+            );
         }
     }
 
@@ -147,26 +219,6 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
             );
         }
 
-    }
-
-    public void save ( final User user ) {
-        final Set< ConstraintViolation< User > > violations = super.checkEntityValidation(
-                this.getValidatorFactory().getValidator(),
-                user
-        );
-
-        if ( !super.isCollectionNotEmpty( violations ) ) {
-            final Transaction transaction = this.newTransaction();
-
-            this.getSession().persist( user );
-
-            transaction.commit();
-        } else {
-            super.analyze(
-                    violations,
-                    userConstraintViolation -> super.logging( userConstraintViolation.getMessage() )
-            );
-        }
     }
 
     public void update ( final Order order ) {
@@ -229,7 +281,7 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
         int operationsCounter = 0;
 
         while ( scrollableResults.next() ) {
-            this.checkBatchLimit( ++operationsCounter );
+            this.checkBatchLimit();
 
             super.logging( scrollableResults.get().getId() );
         }
@@ -400,7 +452,7 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
 
                 user.addNewOrder( order );
 
-                this.checkBatchLimit( ++operationsCounter );
+                this.checkBatchLimit();
 
                 this.getSession().persist( order );
 
@@ -469,7 +521,7 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
     Hibernate can even be configured to expose these statistics via JMX.
 
     This way, you can get access to the Statistics class which comprises all sort of second-level cache metrics.
-     */
+    */
     public void readCacheStatistics () {
         final CacheRegionStatistics regionStatistics = this.getSession()
                 .getSessionFactory()
@@ -502,6 +554,7 @@ public final class HibernateConnector extends Archive implements ServiceCommonMe
     */
     @Override
     public synchronized void close () {
+        this.vacuumTable();
         this.getSession().clear();
         this.getSession().close();
         this.getSessionFactory().close();
